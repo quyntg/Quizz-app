@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quiz Creator</title>
+        <link rel="stylesheet" href="css/style.css">
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+    </head>
+    <body>
+        <div class="container">
+            <aside class="sidebar">
+                <header>
+                    <h2>Danh sách câu hỏi</h2>
+                </header>
+                <ul id="questionNav"></ul>
+
+                <!-- Pagination controls -->
+                <div class="pagination">
+                    <button id="prevPage" class="btn-page" disabled>« Trước</button>
+                    <span id="pageInfo">1 / 4</span>
+                    <button id="nextPage" class="btn-page">Tiếp »</button>
+                </div>
+                <div class="submit-container">
+                    <button id="submitQuiz" class="btn-primary" onclick="confirmSubmit()">Nộp Bài</button>
+                </div>
+            </aside>
+            <main class="content">
+                <header class="content-header">
+                    <h2>Câu hỏi <span id="currentIndex">1</span>/<span id="totalLength"></span></h2>
+                    <div id="countdownTimer" style="font-weight: bold; font-size: 18px; color: red;">
+                        Thời gian: <span id="timerDisplay">--:--</span>
+                    </div>
+                </header>
+                <section id="questionView" class="view-card">
+                    <h3 id="viewQuestion">Chưa có dữ liệu</h3>
+                    <ul id="viewOptions" class="options-list"></ul>
+                    <!-- <p class="correct-answer">Đáp án đúng: <span id="viewCorrect">-</span> -->
+                    </p>
+                </section>
+            </main>
+        </div>
+    </body>
+    <script src="data/questions.js"></script>
+    <script src="js/script.js"></script>
+    <div id="resultModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeResultModal()">&times;</span>
+            <h2>Kết quả bài làm</h2>
+            <div id="resultBody" style="line-height: 25px;"></div>
+        </div>
+    </div>
+</html>
