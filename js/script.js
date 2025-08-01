@@ -1,13 +1,148 @@
 let current = 0;
 const pageSize = 40;
 let currentPage = 0;
-const totalQuestions = questions.length;
-const totalPages = Math.ceil(totalQuestions / pageSize);
+let generatedQuestions = [];
+let totalQuestions = 0;
+let totalPages = 0;
 let timerDuration = 30 * 60; // 30 phút = 1800 giây
 let timerInterval;
 let isSubmitted = false;
 let totalTimeSpent = 0; // giây
 let timerStartAt = null;
+
+function startExam() {
+    window.location.href = 'exam.html';
+	initNav(); // Hiển thị trước nav
+	showQuestion(0); // Hiển thị ô đầu
+	loadQuestions(); // Lấy dữ liệu
+}
+
+function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, hardCount) {
+	const easy = allQuestions.filter(q => q.difficulty === 'easy');
+	const medium = allQuestions.filter(q => q.difficulty === 'medium');
+	const hard = allQuestions.filter(q => q.difficulty === 'hard');
+
+	if (easy.length < easyCount || medium.length < mediumCount || hard.length < hardCount) {
+		alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
+		return;
+	} else {		
+		window.location.href = 'load.html';
+	}
+
+	function pickRandom(arr, n) {
+		const copy = [...arr];
+		const result = [];
+		while (result.length < n && copy.length > 0) {
+			const idx = Math.floor(Math.random() * copy.length);
+			result.push(copy.splice(idx, 1)[0]);
+		}
+		return result;
+	}
+
+	const selectedEasy = pickRandom(easy, easyCount);
+	const selectedMedium = pickRandom(medium, mediumCount);
+	const selectedHard = pickRandom(hard, hardCount);
+
+	let exam = [...selectedEasy, ...selectedMedium, ...selectedHard];
+
+	// 🔄 Trộn câu hỏi
+	exam = shuffleArray(exam);
+
+	// 🔄 Trộn đáp án từng câu
+	exam = exam.map((q) => {
+		const options = shuffleArray(q.options); // Trộn mảng đáp án
+
+		// Tìm lại đáp án đúng dựa vào ID cũ
+		const correctContext = q.correct;
+		const newCorrect = options.findIndex(opt => String(opt.context) === String(correctContext));
+
+		return {
+			...q,
+			options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })), // cập nhật lại ID 1–4
+			correct: (newCorrect + 1).toString() // gán đúng vị trí mới
+		};
+	});
+	
+	return exam.slice(0, total);
+}
+
+// Trộn mảng (Fisher–Yates)
+function shuffleArray(arr) {
+	const array = [...arr];
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+	return array;
+}
+
+
+function readFile(file) {
+	const reader = new FileReader();
+
+	reader.onload = function(e) {
+		const data = new Uint8Array(e.target.result);
+		const workbook = XLSX.read(data, { type: 'array' });
+
+		const sheetName = workbook.SheetNames[0];
+		const sheet = workbook.Sheets[sheetName];
+
+		const raw = XLSX.utils.sheet_to_json(sheet);
+
+		const questions = raw.map((row, index) => {
+			// Xử lý correct
+			let correct = "";
+			if (row.A == row.correct || row.B == row.correct || row.C == row.correct || row.D == row.correct) {
+				correct = row.correct;
+			} else {
+				row.correct = "Không có đáp án nào đúng";
+			}
+
+			// Xử lý difficulty
+			let difficulty = "";
+			if (row.difficulty === "dễ") {
+				difficulty = "easy";
+			} else if (row.difficulty === "trung bình" || row.difficulty === "Trung bình") {
+				difficulty = "medium";
+			} else if (row.difficulty === "khó") {
+				difficulty = "hard";
+			}
+
+			return {
+				id: row.id || `Q${index + 1}`,
+				question: row.question || "",
+				media: row.media || "",
+				options: [
+					{ context: row.A || "", id: 1 },
+					{ context: row.B || "", id: 2 },
+					{ context: row.C || "", id: 3 },
+					{ context: row.D || "", id: 4 }
+				],
+				correct,
+				description: row.description || "",
+				difficulty,
+				note: row.note || "",
+			};
+		});
+		
+		if (questions.length < localStorage.getItem('totalQuestions')) {
+			alert(`❌ Số lượng câu hỏi của đề (${localStorage.getItem('totalQuestions')}) vượt quá giới hạn tối đa (${questions.length})`);
+			return;
+		} else {
+			localStorage.setItem('questions', JSON.stringify(questions));
+			const allQuestions = JSON.parse(localStorage.getItem('questions')) || [];
+			const total = parseInt(localStorage.getItem('totalQuestions')) || 40;
+			const easy = parseInt(localStorage.getItem('easyCount')) || 0;
+			const medium = parseInt(localStorage.getItem('mediumCount')) || 0;
+			const hard = parseInt(localStorage.getItem('hardCount')) || 0;
+			
+			let generatedQuestions = generateExamFromQuestions(allQuestions, total, easy, medium, hard);
+			localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+		}
+    };
+
+	reader.readAsArrayBuffer(file);
+}
 
 function startCountdown(seconds = timerDuration) {
   	timerStartAt = Date.now(); // Ghi lại thời điểm bắt đầu
@@ -68,25 +203,10 @@ function renderPage() {
 	document.getElementById('pageInfo').innerText = `${currentPage + 1} / ${totalPages}`;
 }
 
-// Chuyển trang
-document.getElementById('prevPage').addEventListener('click', () => {
-    if (currentPage > 0) {
-        currentPage--;
-        renderPage();
-    }
-});
-document.getElementById('nextPage').addEventListener('click', () => {
-	const maxPage = Math.floor((totalQuestions - 1) / pageSize);
-	if (currentPage < maxPage) {
-		currentPage++;
-		renderPage();
-	}
-});
-
 // Hiển thị câu hỏi tại vị trí idx
 function showQuestion(idx) {
 	current = idx;
-	const q = questions[idx] || {
+	const q = generatedQuestions[idx] || {
 		question: 'Chưa có dữ liệu',
 		options: [],
 		correct: '-'
@@ -111,26 +231,32 @@ function showQuestion(idx) {
 		li.dataset.id = option.id;
 
 		// Nếu người dùng đã chọn trước thì đánh dấu lại
-		if (q.userAnswer === option.id) {
+		if (q.userAnswer === option.context) {
 			li.classList.add('selected');
 		}
 		
 		// Nếu đã nộp bài → xử lý chấm điểm màu
 		if (isSubmitted) {
 			// Nếu là đáp án đúng → tô xanh
-			if (String(option.id) === String(q.correct)) {
+			if (String(option.context) === String(q.correct)) {
 				li.classList.add('correct-answer');
 			}
-			// Nếu người dùng chọn sai → tô đỏ
-			else if (q.userAnswer === option.id) {
+			// Nếu người dùng chọn đáp án này và nó sai → tô đỏ
+			if (
+				q.userAnswer === option.context &&
+				String(option.context) !== String(q.correct)
+			) {
 				li.classList.add('wrong-answer');
 			}
+			// Khoá không cho chọn lại
+			li.style.pointerEvents = 'none';
+			li.style.opacity = '0.6';
 		} else {
 			// Nếu chưa nộp thì cho chọn
 			li.addEventListener('click', () => {
 				opts.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
 				li.classList.add('selected');
-				questions[idx].userAnswer = option.id;
+				generatedQuestions[idx].userAnswer = option.context;
 				updateAnsweredNav();
 			});
 		}
@@ -153,28 +279,70 @@ function showQuestion(idx) {
 
 // Tải câu hỏi từ server và cập nhật giao diện
 function loadQuestions() {
-	// google.script.run.withSuccessHandler(data => {
-	// 	questions = data;
-	// 	initNav();        // ← tạo nav theo số lượng mới
-	// 	showQuestion(current);
-	// 	startCountdown(); // Bắt đầu đếm ngược
-	// }).getQuestions();
+    // Kiểm tra trạng thái đã nộp bài
+    isSubmitted = JSON.parse(localStorage.getItem('isSubmitted')) || false;
+    generatedQuestions = JSON.parse(localStorage.getItem('questions')) || [];
+    totalTimeSpent = parseInt(localStorage.getItem('totalTimeSpent')) || 0;
 
-	initNav();        // ← tạo nav theo số lượng mới
-	showQuestion(current);
-	startCountdown(); // Bắt đầu đếm ngược
+    // Nếu đã nộp bài, hiển thị lại bài thi cũ
+    if (isSubmitted) {
+        totalQuestions = generatedQuestions.length;
+        totalPages = Math.ceil(totalQuestions / pageSize);
+
+        // Hiển thị thời gian đã làm bài
+        const mins = Math.floor(totalTimeSpent / 60);
+        const secs = totalTimeSpent % 60;
+        document.getElementById("timerDisplay").innerText =
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        // Khởi tạo giao diện
+        initNav();
+        showQuestion(0);
+
+        // Khoá không cho chọn lại đáp án
+        document.querySelectorAll('#viewOptions li').forEach(li => {
+            li.style.pointerEvents = 'none';
+            li.style.opacity = '0.6';
+        });
+
+        // Ẩn nút nộp bài
+        const btn = document.querySelector('button[onclick="confirmSubmit()"]');
+        if (btn) btn.disabled = true;
+    } else {
+        // Nếu chưa nộp bài, bắt đầu đếm ngược
+        startCountdown();
+    }
+
+	// Chuyển trang
+	document.getElementById('prevPage').addEventListener('click', () => {
+		if (currentPage > 0) {
+			currentPage--;
+			renderPage();
+		}
+	});
+	document.getElementById('nextPage').addEventListener('click', () => {
+		const maxPage = Math.floor((totalQuestions - 1) / pageSize);
+		if (currentPage < maxPage) {
+			currentPage++;
+			renderPage();
+		}
+	});
 }
 
 function updateAnsweredNav() {
 	const navItems = document.querySelectorAll('#questionNav li');
-	questions.forEach((q, i) => {
+	generatedQuestions.forEach((q, i) => {
 		const li = navItems[i];
 		if (li) {
-			if (q.userAnswer) {
-				li.classList.add('answered');
-			} else {
-				li.classList.remove('answered');
-			}
+            if (q.userAnswer) {
+                li.classList.remove('unanswered'); // Xóa lớp 'unanswered' nếu đã trả lời
+                li.classList.add('answered'); // Thêm lớp 'answered' cho câu đã trả lời
+            } else {
+                li.classList.remove('answered'); // Xóa lớp 'answered' nếu chưa trả lời
+                if (isSubmitted) {
+					li.classList.add('unanswered'); // Thêm lớp 'unanswered' nếu chưa trả lời và chưa nộp bài
+				}
+            }
 		}
 	});
 }
@@ -190,6 +358,7 @@ function submitExam() {
   	if (isSubmitted) return; // Không nộp lại
 
 	isSubmitted = true;
+	localStorage.setItem('isSubmitted', isSubmitted); // Lưu trạng thái đã nộp
 	clearInterval(timerInterval); // Dừng đếm giờ
 
 	// Tính thời gian làm bài
@@ -203,7 +372,7 @@ function submitExam() {
 	let wrongCount = 0;
 	let unansweredCount = 0;
 
-	questions.forEach((q, idx) => {
+	generatedQuestions.forEach((q, idx) => {
 		const navItem = document.querySelectorAll('#questionNav li')[idx];
 
 		if (!q.userAnswer) {
@@ -233,7 +402,7 @@ function submitExam() {
 	// Ẩn nút nộp bài (nếu có)
 	const btn = document.querySelector('button[onclick="confirmSubmit()"]');
 	if (btn) btn.disabled = true;
-
+	
 	// Hiển thị kết quả bằng modal
 	const resultText = `
 		✅ Đúng: ${correctCount}<br>
@@ -245,15 +414,40 @@ function submitExam() {
 	showQuestion(current);
 	document.getElementById('resultBody').innerHTML = resultText;
 	document.getElementById('resultModal').style.display = 'block';
+	localStorage.setItem('questions', JSON.stringify(generatedQuestions));
 }
 
 function closeResultModal() {
 	document.getElementById('resultModal').style.display = 'none';
 }
 
-// Khởi tạo khi load trang
-window.onload = () => {
-	initNav(); // Hiển thị trước nav
-	showQuestion(0); // Hiển thị ô đầu
-	loadQuestions(); // Lấy dữ liệu
-};
+function newExam() {
+	localStorage.clear();
+	window.location.href = 'create.html';
+}
+
+function generatedOptions(question) {
+	let newQuestion = [];
+	for (let i = 0; i < question.length; i++) {
+		const q = question[i];
+		const options = ['A', 'B', 'C', 'D'].map((opt, idx) => ({
+			context: q[opt] || '',
+			id: idx + 1 // Đảm bảo ID từ 1 đến 4
+		}));
+		q['options'] = options;
+
+		// Xử lý difficulty
+		let difficulty = "";
+		if (q.difficulty === "dễ") {
+			difficulty = "easy";
+		} else if (q.difficulty === "trung bình") {
+			difficulty = "medium";
+		} else if (q.difficulty === "khó") {
+			difficulty = "hard";
+		}
+		q['difficulty'] = difficulty;
+		newQuestion.push(q);
+	}
+
+	return newQuestion;
+}

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Khởi động kỳ thi</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 40px;
+                background: #f4f4f4;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                font-weight: bold;
+            }
+
+            button {
+                padding: 10px 20px;
+                background: #2c7be5;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background: #1a5fb4;
+            }
+
+            input,
+            select {
+                padding: 8px;
+                width: 100%;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+            }
+        </style>
+        <script src="../data/questions.js"></script>
+        <script src="../js/script.js"></script>
+    </head>
+    <body>
+        <h2>Khởi động kỳ thi trắc nghiệm</h2>
+        <div class="form-group">
+            <label for="teacherName">Tên giáo viên:</label>
+            <input type="text" id="teacherName" placeholder="Nguyễn Văn A" value="XXX" required />
+        </div>
+        <div class="form-group">
+            <label for="examTime">Thời gian làm bài (phút):</label>
+            <input type="number" id="examTime" min="1" value="30" required />
+        </div>
+        <div class="form-group">
+            <label for="totalQuestions">Tổng số câu:</label>
+            <input type="number" id="totalQuestions" min="1" value="10" />
+        </div>
+        <div class="form-group">
+            <label for="easyCount">Số câu dễ:</label>
+            <input type="number" id="easyCount" min="0" value="4" />
+        </div>
+        <div class="form-group">
+            <label for="mediumCount">Số câu trung bình:</label>
+            <input type="number" id="mediumCount" min="0" value="4" />
+        </div>
+        <div class="form-group">
+            <label for="hardCount">Số câu khó:</label>
+            <input type="number" id="hardCount" min="0" value="2" />
+        </div>
+        <div class="form-group">
+            <label for="excelFile">Upload file Excel câu hỏi:</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        </div>
+        <button id="btnBank" onclick="viewExam(0)">
+            <span id="iconBank" style="display:none; vertical-align:middle;">
+                <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f504.svg" width="18" height="18" style="margin-right:4px;" class="rotating-icon"/>
+            </span>
+            Tạo đề thi từ ngân hàng có sẵn
+        </button>
+        <button id="btnExcel" onclick="viewExam(1)">
+            <span id="iconExcel" style="display:none; vertical-align:middle;">
+                <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f504.svg" width="18" height="18" style="margin-right:4px;" class="rotating-icon"/>
+            </span>
+            Tạo đề thi từ file excel
+        </button>
+        <script>
+            // Thêm CSS hiệu ứng xoay cho icon
+            const style = document.createElement('style');
+            style.innerHTML = `
+            .rotating-icon {
+                animation: rotate 1s linear infinite;
+            }
+            @keyframes rotate {
+                100% { transform: rotate(360deg); }
+            }
+            `;
+            document.head.appendChild(style);
+
+            async function viewExam(type) {
+                const name = document.getElementById('teacherName').value;
+                const time = document.getElementById('examTime').value;
+                const total = parseInt(document.getElementById('totalQuestions').value);
+                const easy = parseInt(document.getElementById('easyCount').value);
+                const medium = parseInt(document.getElementById('mediumCount').value);
+                const hard = parseInt(document.getElementById('hardCount').value);
+                const fileInput = document.getElementById('excelFile');
+                const file = fileInput.files[0];
+                const btnBank = document.getElementById('btnBank');
+                const btnExcel = document.getElementById('btnExcel');
+                const iconBank = document.getElementById('iconBank');
+                const iconExcel = document.getElementById('iconExcel');
+
+                // Khóa nút và hiện icon xoay
+                btnBank.disabled = true;
+                btnExcel.disabled = true;
+                iconBank.style.display = 'inline-block';
+                iconExcel.style.display = 'inline-block';
+
+                try {
+                    if (type === 0) {
+                        if (!name || !time) {
+                            alert("Vui lòng nhập đầy đủ thông tin.");
+                            return;
+                        }
+                    } else if (type === 1) {
+                        if (!name || !time || !file) {
+                            alert("Vui lòng nhập đầy đủ thông tin.");
+                            return;
+                        }
+
+                        const allowedExtensions = ['xlsx', 'xls'];
+                        const fileName = file.name.toLowerCase();
+                        const isValid = allowedExtensions.some(ext => fileName.endsWith(ext));
+
+                        if (!isValid) {
+                            alert("❌ File không hợp lệ. Vui lòng chọn file .xlsx hoặc .xls");
+                            return;
+                        }
+                    }
+
+                    const sum = easy + medium + hard;
+                    if (sum > total) {
+                        alert(`❌ Tổng số câu từng mức (${sum}) lớn hơn tổng số câu (${total})`);
+                        return;
+                    } else if (sum < total) {
+                        alert(`⚠️ Tổng số câu từng mức (${sum}) nhỏ hơn tổng số câu (${total}). Vui lòng điều chỉnh lại.`);
+                        return;
+                    }
+
+                    async function run() {
+                        await readFile(file); // chờ xong mới chạy tiếp
+                    }
+
+                    async function getAllQuestions() {
+                        try {
+                            const total = parseInt(localStorage.getItem('totalQuestions')) || 40;
+                            const easy = parseInt(localStorage.getItem('easyCount')) || 0;
+                            const medium = parseInt(localStorage.getItem('mediumCount')) || 0;
+                            const hard = parseInt(localStorage.getItem('hardCount')) || 0;
+
+                            const response = await fetch(
+                                `https://script.google.com/macros/s/AKfycbwKwrgMhO6_2jPMe-QUKxKrHFCZDaqC8LaFT7WLwqb7vabSZSWPeQ1rj1WLrCFyo-Jf/exec?action=generateExam&total=${total}&easy=${easy}&medium=${medium}&hard=${hard}`
+                            );
+
+                            if (!response.ok) throw new Error("Lỗi HTTP: " + response.status);
+                            const questionss = await response.json();
+                            let newQuestions = generatedOptions(questionss);
+                            console.log("✅ Lấy dữ liệu thành công:", newQuestions);
+
+                            let generatedQuestions = generateExamFromQuestions(newQuestions, total, easy, medium, hard);
+                            localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+                            return generatedQuestions;
+                        } catch (error) {
+                            console.error("❌ Lỗi khi gọi getAllQuestions():", error);
+                            return [];
+                        }
+                    }
+
+                    localStorage.setItem('isSubmitted', false);
+                    localStorage.setItem('teacherName', name);
+                    localStorage.setItem('examTime', time);
+                    localStorage.setItem('totalQuestions', total);
+                    localStorage.setItem('easyCount', easy);
+                    localStorage.setItem('mediumCount', medium);
+                    localStorage.setItem('hardCount', hard);
+
+                    if (type === 0) {
+                        await getAllQuestions();
+                    } else if (type === 1) {
+                        await run();
+                    }
+                } finally {
+                    // Mở khóa và ẩn icon xoay
+                    btnBank.disabled = false;
+                    btnExcel.disabled = false;
+                    iconBank.style.display = 'none';
+                    iconExcel.style.display = 'none';
+                }
+            }
+        </script>
+    </body>
+</html>

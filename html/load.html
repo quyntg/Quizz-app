@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="../css/style.css">
+        <script src="../data/questions.js"></script>
+        <script src="../js/script.js"></script>
+        <title>Soạn câu hỏi trắc nghiệm</title>
+        <style>
+            body {
+                display: flex;
+                height: 100vh;
+                font-family: sans-serif;
+                margin: 0;
+            }
+
+            #questionList {
+                width: 30%;
+                background: #f4f4f4;
+                border-right: 1px solid #ccc;
+                padding: 10px;
+                overflow-y: auto;
+            }
+
+            #editor {
+                width: 70%;
+                padding: 20px;
+                overflow-y: auto;
+            }
+
+            .q-item {
+                padding: 6px 10px;
+                border: 1px solid #ddd;
+                margin: 5px 0;
+                background: white;
+                cursor: pointer;
+            }
+
+            .q-item.active {
+                background: #007bff;
+                color: white;
+            }
+
+            label {
+                font-weight: bold;
+                margin-top: 10px;
+                display: block;
+            }
+
+            input,
+            textarea,
+            select {
+                width: 100%;
+                padding: 5px;
+                margin-top: 4px;
+                margin-bottom: 10px;
+            }
+
+            textarea {
+                height: 60px;
+            }
+
+            button {
+                padding: 8px 12px;
+                margin-top: 10px;
+            }
+
+            #output {
+                white-space: pre-wrap;
+                background: #eee;
+                padding: 10px;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="questionList">
+            <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
+            <button onclick="generateJSON()" style="display: none;">✅ Tạo JSON</button>
+        	<button onclick="startExam()">💪 Bắt đầu làm bài</button>
+            <div id="listContainer"></div>
+        </div>
+        <div id="editor">
+            <h2 id="editorTitle">Câu hỏi</h2>
+            <label>ID</label>
+            <input type="text" id="id">
+            <label>Câu hỏi</label>
+            <textarea id="question"></textarea>
+            <label>Media (nếu có)</label>
+            <input type="text" id="media">
+            <label>Đáp án A</label>
+            <input type="text" id="A">
+            <label>Đáp án B</label>
+            <input type="text" id="B">
+            <label>Đáp án C</label>
+            <input type="text" id="C">
+            <label>Đáp án D</label>
+            <input type="text" id="D">
+            <label>Đáp án đúng (A/B/C/D)</label>
+            <select id="correct">
+                <option value="">Chọn đáp án</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+            <label>Giải thích</label>
+            <textarea id="description"></textarea>
+            <label>Độ khó</label>
+            <select id="difficulty">
+                <option value="easy">Dễ</option>
+                <option value="medium">Trung bình</option>
+                <option value="hard">Khó</option>
+            </select>
+        </div>
+        <script>
+            let questionsList = [];
+            let currentIndex = -1;
+
+            function loadFromJSON(data) {
+                if (data.length > 0) {					
+					questionsList = data.map(q => {
+                        // Nếu correct là context, xác định đúng là A/B/C/D
+                        let correct = "";   
+                        if (q.correct == (q.options?.[0]?.id)) correct = "A";
+                        else if (q.correct == (q.options?.[1]?.id)) correct = "B";
+                        else if (q.correct == (q.options?.[2]?.id)) correct = "C";
+                        else if (q.correct == (q.options?.[3]?.id)) correct = "D";
+                        else correct = ""; // Không khớp đáp án nào
+
+                        return {
+                            id: q.id,
+                            question: q.question,
+                            media: q.media || "",
+                            A: q.options?.[0]?.context || q.A || "",
+                            B: q.options?.[1]?.context || q.B || "",
+                            C: q.options?.[2]?.context || q.C || "",
+                            D: q.options?.[3]?.context || q.D || "",
+                            correct: correct,
+                            description: q.description || "",
+                            difficulty: q.difficulty || "dễ"
+                        };
+                    });
+					renderList();
+					selectQuestion(0);
+				}
+            }
+
+            function renderList() {
+                const container = document.getElementById("listContainer");
+                container.innerHTML = "";
+                questionsList.forEach((q, i) => {
+                    const div = document.createElement("div");
+                    div.className = "q-item" + (i === currentIndex ? " active" : "");
+                    div.innerHTML = `<b>${q.id || `Q${i + 1}`}</b>. ${q.question}`;
+                    div.onclick = () => selectQuestion(i);
+                    container.appendChild(div);
+                });
+            }
+
+            function addQuestion() {
+                const newQuestion = {
+                    id: `Q${questionsList.length + 1}`,
+                    question: "",
+                    media: "",
+                    A: "",
+                    B: "",
+                    C: "",
+                    D: "",
+                    correct: "",
+                    description: "",
+                    difficulty: "dễ"
+                };
+                questionsList.push(newQuestion);
+                selectQuestion(questionsList.length - 1);
+            }
+
+            function selectQuestion(index) {
+                currentIndex = index;
+                const q = questionsList[index];
+                document.getElementById("id").value = q.id;
+                document.getElementById("question").value = q.question;
+                document.getElementById("media").value = q.media;
+                document.getElementById("A").value = q.A;
+                document.getElementById("B").value = q.B;
+                document.getElementById("C").value = q.C;
+                document.getElementById("D").value = q.D;
+                // Đảm bảo correct là A/B/C/D, không khoảng trắng, chữ hoa
+                document.getElementById("correct").value = (q.correct || "").toUpperCase().trim();
+                document.getElementById("description").value = q.description;
+                document.getElementById("difficulty").value = q.difficulty;
+                renderList();
+            }
+
+            function updateCurrent() {
+                if (currentIndex === -1) return;
+                const q = questionsList[currentIndex];
+                q.id = document.getElementById("id").value;
+                q.question = document.getElementById("question").value;
+                q.media = document.getElementById("media").value;
+                q.A = document.getElementById("A").value;
+                q.B = document.getElementById("B").value;
+                q.C = document.getElementById("C").value;
+                q.D = document.getElementById("D").value;
+                q.correct = document.getElementById("correct").value.toUpperCase();
+                q.description = document.getElementById("description").value;
+                q.difficulty = document.getElementById("difficulty").value;
+                renderList();
+            }
+            ["id", "question", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
+                document.getElementById(id).addEventListener("input", updateCurrent);
+            });
+
+            function generateJSON() {
+                const output = questionsList.map((q, index) => {
+                    const correctMap = {
+                        A: "1",
+                        B: "2",
+                        C: "3",
+                        D: "4"
+                    };
+                    const correct = correctMap[q.correct] || "";
+                    return {
+                        id: q.id || `Q${index + 1}`,
+                        question: q.question,
+                        media: q.media || "",
+                        options: [{
+                            context: q.A || "",
+                            id: 1
+                        }, {
+                            context: q.B || "",
+                            id: 2
+                        }, {
+                            context: q.C || "",
+                            id: 3
+                        }, {
+                            context: q.D || "",
+                            id: 4
+                        }],
+                        correct,
+                        description: q.description || "",
+                        difficulty: q.difficulty
+                    };
+                });
+                console.log("output---", output);
+            }
+            // Khởi tạo từ JSON sẵn
+            window.onload = () => {				
+				loadFromJSON(JSON.parse(localStorage.getItem('questions')));
+			};
+        </script>
+    </body>
+</html>
