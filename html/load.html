@@ -101,7 +101,7 @@
         <div id="questionList">
             <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
             <button onclick="generateJSON()" style="display: none;">✅ Tạo JSON</button>
-        	<button onclick="startExam()">💪 Bắt đầu làm bài</button>
+            <button onclick="startExam()">💪 Bắt đầu làm bài</button>
             <div id="listContainer"></div>
         </div>
         <div id="editor">
@@ -142,16 +142,23 @@
             let currentIndex = -1;
 
             function loadFromJSON(data) {
-                if (data.length > 0) {					
-					questionsList = data.map(q => {
-                        // Nếu correct là context, xác định đúng là A/B/C/D
-                        let correct = "";   
-                        if (q.correct == (q.options?.[0]?.id)) correct = "A";
-                        else if (q.correct == (q.options?.[1]?.id)) correct = "B";
-                        else if (q.correct == (q.options?.[2]?.id)) correct = "C";
-                        else if (q.correct == (q.options?.[3]?.id)) correct = "D";
-                        else correct = ""; // Không khớp đáp án nào
-
+                if (data.length > 0) {
+                    questionsList = data.map(q => {
+                        // Ưu tiên lấy correctId nếu có
+                        let correct = "";
+                        if (q.correctId) {
+                            if (q.correctId == 1) correct = "A";
+                            else if (q.correctId == 2) correct = "B";
+                            else if (q.correctId == 3) correct = "C";
+                            else if (q.correctId == 4) correct = "D";
+                        } else if (q.correct) {
+                            // Nếu correct là số (vị trí)
+                            if (q.correct == 1 || q.correct == "1") correct = "A";
+                            else if (q.correct == 2 || q.correct == "2") correct = "B";
+                            else if (q.correct == 3 || q.correct == "3") correct = "C";
+                            else if (q.correct == 4 || q.correct == "4") correct = "D";
+                            else correct = (q.correct || "").toUpperCase();
+                        }
                         return {
                             id: q.id,
                             question: q.question,
@@ -165,9 +172,9 @@
                             difficulty: q.difficulty || "dễ"
                         };
                     });
-					renderList();
-					selectQuestion(0);
-				}
+                    renderList();
+                    selectQuestion(0);
+                }
             }
 
             function renderList() {
@@ -238,30 +245,24 @@
             function generateJSON() {
                 const output = questionsList.map((q, index) => {
                     const correctMap = {
-                        A: "1",
-                        B: "2",
-                        C: "3",
-                        D: "4"
+                        A: 1,
+                        B: 2,
+                        C: 3,
+                        D: 4
                     };
-                    const correct = correctMap[q.correct] || "";
+                    const correctId = correctMap[q.correct] || null;
                     return {
                         id: q.id || `Q${index + 1}`,
                         question: q.question,
                         media: q.media || "",
-                        options: [{
-                            context: q.A || "",
-                            id: 1
-                        }, {
-                            context: q.B || "",
-                            id: 2
-                        }, {
-                            context: q.C || "",
-                            id: 3
-                        }, {
-                            context: q.D || "",
-                            id: 4
-                        }],
-                        correct,
+                        options: [
+                            { context: q.A || "", id: 1 },
+                            { context: q.B || "", id: 2 },
+                            { context: q.C || "", id: 3 },
+                            { context: q.D || "", id: 4 }
+                        ],
+                        correct: correctId ? correctId.toString() : "",
+                        correctId: correctId,
                         description: q.description || "",
                         difficulty: q.difficulty
                     };
@@ -270,8 +271,8 @@
             }
             // Khởi tạo từ JSON sẵn
             window.onload = () => {				
-				loadFromJSON(JSON.parse(localStorage.getItem('questions')));
-			};
+                loadFromJSON(JSON.parse(localStorage.getItem('questions')));
+            };
         </script>
     </body>
 </html>

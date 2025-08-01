@@ -18,53 +18,56 @@ function startExam() {
 }
 
 function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, hardCount) {
-	const easy = allQuestions.filter(q => q.difficulty === 'easy');
-	const medium = allQuestions.filter(q => q.difficulty === 'medium');
-	const hard = allQuestions.filter(q => q.difficulty === 'hard');
+    const easy = allQuestions.filter(q => q.difficulty === 'easy');
+    const medium = allQuestions.filter(q => q.difficulty === 'medium');
+    const hard = allQuestions.filter(q => q.difficulty === 'hard');
 
-	if (easy.length < easyCount || medium.length < mediumCount || hard.length < hardCount) {
-		alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
-		return;
-	} else {		
-		window.location.href = 'load.html';
-	}
+    if (easy.length < easyCount || medium.length < mediumCount || hard.length < hardCount) {
+        alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
+        return;
+    } else {        
+        window.location.href = 'load.html';
+    }
 
-	function pickRandom(arr, n) {
-		const copy = [...arr];
-		const result = [];
-		while (result.length < n && copy.length > 0) {
-			const idx = Math.floor(Math.random() * copy.length);
-			result.push(copy.splice(idx, 1)[0]);
-		}
-		return result;
-	}
+    function pickRandom(arr, n) {
+        const copy = [...arr];
+        const result = [];
+        while (result.length < n && copy.length > 0) {
+            const idx = Math.floor(Math.random() * copy.length);
+            result.push(copy.splice(idx, 1)[0]);
+        }
+        return result;
+    }
 
-	const selectedEasy = pickRandom(easy, easyCount);
-	const selectedMedium = pickRandom(medium, mediumCount);
-	const selectedHard = pickRandom(hard, hardCount);
+    const selectedEasy = pickRandom(easy, easyCount);
+    const selectedMedium = pickRandom(medium, mediumCount);
+    const selectedHard = pickRandom(hard, hardCount);
 
-	let exam = [...selectedEasy, ...selectedMedium, ...selectedHard];
+    let exam = [...selectedEasy, ...selectedMedium, ...selectedHard];
 
-	// 🔄 Trộn câu hỏi
-	exam = shuffleArray(exam);
+    // 🔄 Trộn câu hỏi
+    exam = shuffleArray(exam);
 
-	// 🔄 Trộn đáp án từng câu
-	exam = exam.map((q) => {
-		const options = shuffleArray(q.options); // Trộn mảng đáp án
+    // 🔄 Trộn đáp án từng câu
+    exam = exam.map((q) => {
+        const options = shuffleArray(q.options); // Trộn mảng đáp án
 
-		// Tìm lại đáp án đúng dựa vào ID cũ
-		const correctContext = q.correct;
-		const newCorrect = options.findIndex(
-			opt => String(opt.context).trim().toLowerCase() === String(correctContext).trim().toLowerCase()
-		);
-		return {
-			...q,
-			options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })),
-			correct: newCorrect !== -1 ? (newCorrect + 1).toString() : ""
-		};
-	});
-	
-	return exam.slice(0, total);
+        // Xác định đáp án đúng mới dựa vào id cũ (correct là vị trí 1-4 trước khi trộn)
+        let oldCorrectId = q.correct ? parseInt(q.correct) : null;
+        let correctOption = oldCorrectId ? q.options[oldCorrectId - 1] : null;
+        // Tìm vị trí mới của đáp án đúng sau khi trộn
+        let newCorrect = "";
+        if (correctOption) {
+            newCorrect = options.findIndex(opt => opt.context === correctOption.context) + 1;
+        }
+        return {
+            ...q,
+            options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })),
+            correct: newCorrect ? newCorrect.toString() : ""
+        };
+    });
+    
+    return exam.slice(0, total);
 }
 
 // Trộn mảng (Fisher–Yates)
@@ -91,40 +94,43 @@ function readFile(file) {
 		const raw = XLSX.utils.sheet_to_json(sheet);
 
 		const questions = raw.map((row, index) => {
-			// Xử lý correct
-			let correct = "";
-			if (row.A == row.correct || row.B == row.correct || row.C == row.correct || row.D == row.correct) {
-				correct = row.correct;
-			} else {
-				row.correct = "Không có đáp án nào đúng";
-			}
+            // Xử lý correctId (vị trí đáp án đúng, 1-4)
+            let correctId = row.correctId ? parseInt(row.correctId) : null;
+            // Nếu không có correctId, fallback sang so sánh nội dung (giữ logic cũ cho an toàn)
+            if (!correctId && row.correct) {
+                if (row.A == row.correct) correctId = 1;
+                else if (row.B == row.correct) correctId = 2;
+                else if (row.C == row.correct) correctId = 3;
+                else if (row.D == row.correct) correctId = 4;
+            }
+            // Nếu vẫn không xác định được thì để null
 
-			// Xử lý difficulty
-			let difficulty = "";
-			if (row.difficulty === "dễ") {
-				difficulty = "easy";
-			} else if (row.difficulty === "trung bình" || row.difficulty === "Trung bình") {
-				difficulty = "medium";
-			} else if (row.difficulty === "khó") {
-				difficulty = "hard";
-			}
+            // Xử lý difficulty
+            let difficulty = "";
+            if (row.difficulty === "dễ") {
+                difficulty = "easy";
+            } else if (row.difficulty === "trung bình" || row.difficulty === "Trung bình") {
+                difficulty = "medium";
+            } else if (row.difficulty === "khó") {
+                difficulty = "hard";
+            }
 
-			return {
-				id: row.id || `Q${index + 1}`,
-				question: row.question || "",
-				media: row.media || "",
-				options: [
-					{ context: row.A || "", id: 1 },
-					{ context: row.B || "", id: 2 },
-					{ context: row.C || "", id: 3 },
-					{ context: row.D || "", id: 4 }
-				],
-				correct,
-				description: row.description || "",
-				difficulty,
-				note: row.note || "",
-			};
-		});
+            return {
+                id: row.id || `Q${index + 1}`,
+                question: row.question || "",
+                media: row.media || "",
+                options: [
+                    { context: row.A || "", id: 1 },
+                    { context: row.B || "", id: 2 },
+                    { context: row.C || "", id: 3 },
+                    { context: row.D || "", id: 4 }
+                ],
+                correct: correctId ? correctId.toString() : "", // Lưu vị trí đáp án đúng (1-4) dạng chuỗi
+                description: row.description || "",
+                difficulty,
+                note: row.note || "",
+            };
+        });
 		
 		if (questions.length < localStorage.getItem('totalQuestions')) {
 			alert(`❌ Số lượng câu hỏi của đề (${localStorage.getItem('totalQuestions')}) vượt quá giới hạn tối đa (${questions.length})`);
