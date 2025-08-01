@@ -11,7 +11,7 @@ let totalTimeSpent = 0; // giây
 let timerStartAt = null;
 
 function startExam() {
-    window.location.href = 'exam.html';
+	window.location.href = 'exam.html';
 	initNav(); // Hiển thị trước nav
 	showQuestion(0); // Hiển thị ô đầu
 	loadQuestions(); // Lấy dữ liệu
@@ -54,12 +54,13 @@ function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, 
 
 		// Tìm lại đáp án đúng dựa vào ID cũ
 		const correctContext = q.correct;
-		const newCorrect = options.findIndex(opt => String(opt.context) === String(correctContext));
-
+		const newCorrect = options.findIndex(
+			opt => String(opt.context).trim().toLowerCase() === String(correctContext).trim().toLowerCase()
+		);
 		return {
 			...q,
-			options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })), // cập nhật lại ID 1–4
-			correct: (newCorrect + 1).toString() // gán đúng vị trí mới
+			options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })),
+			correct: newCorrect !== -1 ? (newCorrect + 1).toString() : ""
 		};
 	});
 	
@@ -139,13 +140,13 @@ function readFile(file) {
 			let generatedQuestions = generateExamFromQuestions(allQuestions, total, easy, medium, hard);
 			localStorage.setItem('questions', JSON.stringify(generatedQuestions));
 		}
-    };
+	};
 
 	reader.readAsArrayBuffer(file);
 }
 
 function startCountdown(seconds = timerDuration) {
-  	timerStartAt = Date.now(); // Ghi lại thời điểm bắt đầu
+	timerStartAt = Date.now(); // Ghi lại thời điểm bắt đầu
 	let timeLeft = seconds;
 	updateTimerDisplay(timeLeft);
 	
@@ -179,8 +180,8 @@ function initNav() {
 		li.addEventListener('click', () => showQuestion(i - 1));
 		nav.appendChild(li);
 	}
-    renderPage();
-    document.getElementById('totalLength').innerText = totalQuestions;
+	renderPage();
+	document.getElementById('totalLength').innerText = totalQuestions;
 }
 
 // Đánh dấu ô đang active
@@ -192,13 +193,13 @@ function highlightNav(idx) {
 
 // Hiển thị đúng 10 ô của trang hiện tại
 function renderPage() {
-    const items = document.querySelectorAll('#questionNav li');
-    items.forEach((li, i) => {
-        const pageIndex = Math.floor(i / pageSize);
-        li.style.display = (pageIndex === currentPage) ? 'flex' : 'none';
-    });
-    // cập nhật nút phân trang
-    document.getElementById('prevPage').disabled = currentPage === 0;
+	const items = document.querySelectorAll('#questionNav li');
+	items.forEach((li, i) => {
+		const pageIndex = Math.floor(i / pageSize);
+		li.style.display = (pageIndex === currentPage) ? 'flex' : 'none';
+	});
+	// cập nhật nút phân trang
+	document.getElementById('prevPage').disabled = currentPage === 0;
 	document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
 	document.getElementById('pageInfo').innerText = `${currentPage + 1} / ${totalPages}`;
 }
@@ -238,13 +239,13 @@ function showQuestion(idx) {
 		// Nếu đã nộp bài → xử lý chấm điểm màu
 		if (isSubmitted) {
 			// Nếu là đáp án đúng → tô xanh
-			if (String(option.context) === String(q.correct)) {
+			if ((i + 1).toString() === q.correct) {
 				li.classList.add('correct-answer');
 			}
 			// Nếu người dùng chọn đáp án này và nó sai → tô đỏ
 			if (
 				q.userAnswer === option.context &&
-				String(option.context) !== String(q.correct)
+				(i + 1).toString() !== q.correct
 			) {
 				li.classList.add('wrong-answer');
 			}
@@ -279,39 +280,39 @@ function showQuestion(idx) {
 
 // Tải câu hỏi từ server và cập nhật giao diện
 function loadQuestions() {
-    // Kiểm tra trạng thái đã nộp bài
-    isSubmitted = JSON.parse(localStorage.getItem('isSubmitted')) || false;
-    generatedQuestions = JSON.parse(localStorage.getItem('questions')) || [];
-    totalTimeSpent = parseInt(localStorage.getItem('totalTimeSpent')) || 0;
+	// Kiểm tra trạng thái đã nộp bài
+	isSubmitted = JSON.parse(localStorage.getItem('isSubmitted')) || false;
+	generatedQuestions = JSON.parse(localStorage.getItem('questions')) || [];
+	totalTimeSpent = parseInt(localStorage.getItem('totalTimeSpent')) || 0;
 
-    // Nếu đã nộp bài, hiển thị lại bài thi cũ
-    if (isSubmitted) {
-        totalQuestions = generatedQuestions.length;
-        totalPages = Math.ceil(totalQuestions / pageSize);
+	// Nếu đã nộp bài, hiển thị lại bài thi cũ
+	if (isSubmitted) {
+		totalQuestions = generatedQuestions.length;
+		totalPages = Math.ceil(totalQuestions / pageSize);
 
-        // Hiển thị thời gian đã làm bài
-        const mins = Math.floor(totalTimeSpent / 60);
-        const secs = totalTimeSpent % 60;
-        document.getElementById("timerDisplay").innerText =
-            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+		// Hiển thị thời gian đã làm bài
+		const mins = Math.floor(totalTimeSpent / 60);
+		const secs = totalTimeSpent % 60;
+		document.getElementById("timerDisplay").innerText =
+			`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-        // Khởi tạo giao diện
-        initNav();
-        showQuestion(0);
+		// Khởi tạo giao diện
+		initNav();
+		showQuestion(0);
 
-        // Khoá không cho chọn lại đáp án
-        document.querySelectorAll('#viewOptions li').forEach(li => {
-            li.style.pointerEvents = 'none';
-            li.style.opacity = '0.6';
-        });
+		// Khoá không cho chọn lại đáp án
+		document.querySelectorAll('#viewOptions li').forEach(li => {
+			li.style.pointerEvents = 'none';
+			li.style.opacity = '0.6';
+		});
 
-        // Ẩn nút nộp bài
-        const btn = document.querySelector('button[onclick="confirmSubmit()"]');
-        if (btn) btn.disabled = true;
-    } else {
-        // Nếu chưa nộp bài, bắt đầu đếm ngược
-        startCountdown();
-    }
+		// Ẩn nút nộp bài
+		const btn = document.querySelector('button[onclick="confirmSubmit()"]');
+		if (btn) btn.disabled = true;
+	} else {
+		// Nếu chưa nộp bài, bắt đầu đếm ngược
+		startCountdown();
+	}
 
 	// Chuyển trang
 	document.getElementById('prevPage').addEventListener('click', () => {
@@ -334,15 +335,15 @@ function updateAnsweredNav() {
 	generatedQuestions.forEach((q, i) => {
 		const li = navItems[i];
 		if (li) {
-            if (q.userAnswer) {
-                li.classList.remove('unanswered'); // Xóa lớp 'unanswered' nếu đã trả lời
-                li.classList.add('answered'); // Thêm lớp 'answered' cho câu đã trả lời
-            } else {
-                li.classList.remove('answered'); // Xóa lớp 'answered' nếu chưa trả lời
-                if (isSubmitted) {
+			if (q.userAnswer) {
+				li.classList.remove('unanswered'); // Xóa lớp 'unanswered' nếu đã trả lời
+				li.classList.add('answered'); // Thêm lớp 'answered' cho câu đã trả lời
+			} else {
+				li.classList.remove('answered'); // Xóa lớp 'answered' nếu chưa trả lời
+				if (isSubmitted) {
 					li.classList.add('unanswered'); // Thêm lớp 'unanswered' nếu chưa trả lời và chưa nộp bài
 				}
-            }
+			}
 		}
 	});
 }
@@ -355,7 +356,7 @@ function confirmSubmit() {
 }
 
 function submitExam() {
-  	if (isSubmitted) return; // Không nộp lại
+	if (isSubmitted) return; // Không nộp lại
 
 	isSubmitted = true;
 	localStorage.setItem('isSubmitted', isSubmitted); // Lưu trạng thái đã nộp
@@ -374,13 +375,16 @@ function submitExam() {
 
 	generatedQuestions.forEach((q, idx) => {
 		const navItem = document.querySelectorAll('#questionNav li')[idx];
+		// Lấy context đáp án đúng theo vị trí correct
+		const correctIndex = parseInt(q.correct) - 1;
+		const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
 
 		if (!q.userAnswer) {
 			// Chưa làm
 			unansweredCount++;
 			navItem.classList.remove('correct', 'wrong');
 			navItem.classList.add('unanswered');
-		} else if (String(q.userAnswer) === String(q.correct)) {
+		} else if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
 			// Đúng
 			correctCount++;
 			navItem.classList.remove('wrong', 'unanswered');
@@ -408,7 +412,7 @@ function submitExam() {
 		✅ Đúng: ${correctCount}<br>
 		❌ Sai: ${wrongCount}<br>
 		⚠️ Chưa làm: ${unansweredCount}<br>
-    	⏱️ Thời gian làm bài: ${timeText}
+		⏱️ Thời gian làm bài: ${timeText}
 	`;
 	
 	showQuestion(current);
