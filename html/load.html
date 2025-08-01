@@ -71,6 +71,30 @@
                 padding: 10px;
                 margin-top: 10px;
             }
+            @media (max-width: 768px) {
+                body {
+                    flex-direction: column;
+                }
+
+                #questionList, #editor {
+                    width: 100%;
+                    height: auto;
+                }
+
+                #questionList {
+                    border-right: none;
+                    border-bottom: 1px solid #ccc;
+                }
+
+                #editor {
+                    padding: 12px;
+                }
+
+                input, textarea, select {
+                    font-size: 16px;
+                }
+            }
+
         </style>
     </head>
     <body>

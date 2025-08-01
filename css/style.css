@@ -290,3 +290,67 @@ button {
 button:hover {
     background: #1a5fb4;
 }
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        order: 2;
+        padding: var(--gap);
+    }
+
+    .content {
+        width: 100%;
+        order: 1;
+        padding: var(--gap);
+    }
+
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .modal-content {
+        width: 90%;
+    }
+
+    #questionNav {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .view-card {
+        padding: 16px;
+    }
+
+    button, input, select {
+        font-size: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    #editor,
+    #questionList {
+        width: 100% !important;
+        height: auto;
+    }
+
+    #questionList {
+        border-right: none;
+        border-bottom: 1px solid #ccc;
+    }
+
+    #editor {
+        padding: 12px;
+    }
+
+    .options-list li {
+        width: 100%;
+    }
+}
