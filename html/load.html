@@ -148,7 +148,6 @@
     <body>
         <div id="questionList">
             <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
-            <button onclick="generateJSON()" style="display: none;">✅ Tạo JSON</button>
             <button onclick="startExam()">💪 Bắt đầu làm bài</button>
             <button onclick="viewDraftToPrint()">🖨️ In bài thi</button>
             <div id="listContainer"></div>
@@ -209,23 +208,6 @@
             let currentIndex = -1;
 
             function loadFromJSON(data) {
-                if (data.length > 0) {
-                    questionsList = data.map(q => {
-                        // Ưu tiên lấy correctId nếu có
-                        let correct = "";
-                        if (q.correctId) {
-                            if (q.correctId == 1) correct = "A";
-                            else if (q.correctId == 2) correct = "B";
-                            else if (q.correctId == 3) correct = "C";
-                            else if (q.correctId == 4) correct = "D";
-                        } else if (q.correct) {
-                            // Nếu correct là số (vị trí)
-                            if (q.correct == 1 || q.correct == "1") correct = "A";
-                            else if (q.correct == 2 || q.correct == "2") correct = "B";
-                            else if (q.correct == 3 || q.correct == "3") correct = "C";
-                            else if (q.correct == 4 || q.correct == "4") correct = "D";
-                            else correct = (q.correct || "").toUpperCase();
-                        }
                 if (data.length > 0) {					
                     questionsList = data.map(q => {
                         // Nếu correct là context, xác định đúng là A/B/C/D
@@ -250,9 +232,6 @@
                             difficulty: q.difficulty || "dễ"
                         };
                     });
-                    renderList();
-                    selectQuestion(0);
-                }
                     renderList();
                     selectQuestion(0);
                 }
@@ -329,25 +308,31 @@
             function generateJSON() {
                 const output = questionsList.map((q, index) => {
                     const correctMap = {
-                        A: 1,
-                        B: 2,
-                        C: 3,
-                        D: 4
+                        A: "1",
+                        B: "2",
+                        C: "3",
+                        D: "4"
                     };
-                    const correctId = correctMap[q.correct] || null;
+                    const correct = correctMap[q.correct] || "";
                     return {
                         id: q.id || `Q${index + 1}`,
                         question: q.question,
                         subject: q.subject || "",
                         media: q.media || "",
-                        options: [
-                            { context: q.A || "", id: 1 },
-                            { context: q.B || "", id: 2 },
-                            { context: q.C || "", id: 3 },
-                            { context: q.D || "", id: 4 }
-                        ],
-                        correct: correctId ? correctId.toString() : "",
-                        correctId: correctId,
+                        options: [{
+                            context: q.A || "",
+                            id: 1
+                        }, {
+                            context: q.B || "",
+                            id: 2
+                        }, {
+                            context: q.C || "",
+                            id: 3
+                        }, {
+                            context: q.D || "",
+                            id: 4
+                        }],
+                        correct,
                         description: q.description || "",
                         difficulty: q.difficulty
                     };
@@ -356,8 +341,6 @@
             }
             // Khởi tạo từ JSON sẵn
             window.onload = () => {				
-                loadFromJSON(JSON.parse(localStorage.getItem('questions')));
-            };
                 const subjectSelect = document.getElementById('subject');
                 if (subjectSelect && subjectSelect.options.length <= 1) {
                     subjects.forEach(sub => {
