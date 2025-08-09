@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../data/data.js"></script>
+        <title>Đăng ký tài khoản</title>
+        <style>
+            body {
+                background: #f5f7fa;
+                padding: 20px;
+            }
+
+            .form-container {
+                max-width: 800px;
+                margin: auto;
+                background: #fff;
+                padding: 25px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            h2 {
+                text-align: center;
+                color: #2c3e50;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            label {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            input,
+            select,
+            textarea {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                font-size: 14px;
+                box-sizing: border-box;
+            }
+
+            /* input:invalid {
+                border-color: red;
+            } */
+
+            .form-actions {
+                text-align: center;
+                margin-top: 20px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                background: #3498db;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background: #2980b9;
+            }
+
+            .required {
+                color: #d63031;
+                margin-left: 2px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            /* Modal hiện đại trả kết quả đăng ký */
+            .modal-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(52,152,219,0.15);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                transition: background 0.3s;
+            }
+            .modal-box {
+                background: #fff;
+                border-radius: 14px;
+                box-shadow: 0 8px 32px rgba(52,152,219,0.18);
+                padding: 32px 28px 24px 28px;
+                min-width: 320px;
+                max-width: 90vw;
+                text-align: center;
+                animation: modalFadeIn 0.35s;
+                position: relative;
+            }
+            @keyframes modalFadeIn {
+                from { opacity: 0; transform: translateY(40px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .modal-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #3498db;
+                margin-bottom: 12px;
+            }
+            .modal-content {
+                font-size: 16px;
+                color: #2d3436;
+                margin-bottom: 18px;
+            }
+            .modal-close {
+                position: absolute;
+                top: 12px;
+                right: 16px;
+                background: none;
+                border: none;
+                font-size: 22px;
+                color: #636e72;
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+            .modal-close:hover {
+                color: #d63031;
+            }
+
+            .close-button {
+                background: #3498db;
+                color :#fff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 18px;
+                font-size: 15px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="form-container">
+            <h2>Đăng ký tài khoản</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="account">Tài khoản <span class="required">*</span></label>
+                    <input type="text" id="account" name="account" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mật khẩu <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Họ tên <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="birthday">Ngày sinh <span class="required">*</span></label>
+                    <input type="date" id="birthday" name="birthday" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Giới tính <span class="required">*</span></label>
+                    <select id="gender" name="gender" required>
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Số điện thoại <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" pattern="0[0-9]{9}" placeholder="Ví dụ: 0912345678" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Địa chỉ <span class="required">*</span></label>
+                    <textarea id="address" name="address" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="school">Trường <span class="required">*</span></label>
+                    <input type="text" id="school" name="school" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Khối <span class="required">*</span></label>
+                    <input type="number" id="grade" name="grade" min="1" max="12" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Môn <span class="required">*</span></label>                    
+                    <select id="subject" required>
+                        <option value="">Chọn môn học</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="note">Ghi chú </label>
+                    <textarea id="note" name="note" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Đăng ký</button>
+                </div>
+            </form>
+        </div>
+        <!-- Modal kết quả đăng ký -->
+        <div class="modal-overlay" id="resultModal">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeResultModal()">&times;</button>
+                <div class="modal-title" id="resultTitle">Kết quả đăng ký</div>
+                <div class="modal-content" id="resultContent"></div>
+                <button class="close-button" onclick="closeResultModal()">Đóng</button>
+            </div>
+        </div>
+        <script>
+            let checkRegister = 1;
+            const subjectSelect = document.getElementById('subject');
+            if (subjectSelect && subjectSelect.options.length <= 1) {
+                subjects.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.value;
+                    opt.textContent = sub.text;
+                    subjectSelect.appendChild(opt);
+                });
+            }
+
+            function showResultModal(title, content) {
+                document.getElementById('resultTitle').innerText = title;
+                document.getElementById('resultContent').innerHTML = content;
+                document.getElementById('resultModal').style.display = 'flex';
+            }
+
+            function closeResultModal() {
+                if (checkRegister === 1) {
+                    window.location.href = 'login.html';
+                }
+                document.getElementById('resultModal').style.display = 'none';
+                document.getElementById('registerForm').reset();
+            }
+
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Validate số điện thoại thêm lần nữa
+                const phone = document.getElementById('phone').value;
+                const phoneRegex = /^0[0-9]{9}$/;
+                if (!phoneRegex.test(phone)) {
+                    showResultModal('Lỗi đăng ký', 'Số điện thoại không hợp lệ!');
+                    return;
+                }
+                // Lấy dữ liệu từ form
+                const formData = {};
+                new FormData(this).forEach((value, key) => {
+                    formData[key] = value;
+                });
+                // Gửi dữ liệu về Google Apps Script
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(function(res) {
+                        showResultModal('Đăng ký thành công', 'Bạn đã đăng ký thành công!');
+                        document.getElementById('registerForm').reset();
+                        checkRegister = 1;
+                    }).withFailureHandler(function(err) {
+                        showResultModal('Lỗi đăng ký', 'Đăng ký thất bại! Vui lòng thử lại.');
+                        checkRegister = 0;
+                    }).registerAccount(formData);
+                } else {
+                    // Nếu không có Google Apps Script, hiển thị demo
+                    showResultModal('Đăng ký thành công', 'Bạn đã đăng ký thành công!');
+                    checkRegister = 1;
+                }
+            });
+        </script>
+    </body>
+</html>

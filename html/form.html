@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Đề thi trắc nghiệm</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+        <script src="../data/data.js"></script>
+        <style>
+            body {
+                background: #f5f7fa;
+                margin: 0;
+                padding: 20px;
+            }
+
+            .exam-container {
+                max-width: 800px;
+                margin: 20px auto;
+                background: #fff;
+                padding: 18px 16px 18px 16px;
+                border-radius: 12px;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+                color: #222;
+            }
+
+            .exam-header-block {
+                max-width: 90%;
+                margin: auto;
+                margin-bottom: 32px;
+                font-size: 16px;
+                color: #2c3e50;
+            }
+
+            .header-columns {
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                margin-bottom: 18px;
+            }
+
+            .header-left, .header-right {
+                width: 48%;
+                line-height: 1.6;
+            }
+            .header-left { text-align: left; }
+            .header-right { text-align: right; }
+
+            .student-info p {
+                margin: 6px 0;
+                font-size: 15px;
+            }
+
+            .exam-instruction {
+                margin-top: 18px;
+                text-align: justify;
+                font-size: 15px;
+            }
+
+            .question {
+                padding-bottom: 16px;
+            }
+            .question p {
+                margin: 0 0 10px;
+                color: #2c3e50;
+                font-size: 17px;
+            }
+            .options {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .options li {
+                margin-bottom: 8px;
+                padding: 10px 16px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                font-size: 16px;
+                color: #222;
+                border: 1px solid #e0e0e0;
+                transition: background 0.3s, border 0.3s;
+                margin-left: 28px;
+            }
+            .options li:hover {
+                background: #e3eafc;
+                border: 1px solid #b2bec3;
+            }
+            .btn-download {
+                display: inline-block;
+                margin-top: 32px;
+                padding: 12px 28px;
+                background-color: #3498db;
+                color: #fff;
+                text-decoration: none;
+                border-radius: 7px;
+                font-size: 17px;
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 2px 6px rgba(52,152,219,0.08);
+                transition: background 0.2s;
+            }
+            .btn-download:hover {
+                background-color: #217dbb;
+            }
+
+            .header-left p,
+            .header-right p {
+                text-align: center;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            .question, .exam-header-block {
+                page-break-inside: avoid;
+            }
+
+            .bailam-title {
+                text-align: center;
+                font-size: 20px !important;
+                font-weight: bold;
+                margin: 18px 0 10px 0 !important;
+                letter-spacing: 2px;
+            }
+
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact;
+                }
+                body, .exam-container {
+                    background: #fff !important;
+                    color: #000 !important;
+                    box-shadow: none !important;
+                }
+                .btn-download {
+                    display: none !important;
+                }
+                .exam-container {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <button class="btn-download" onclick="downloadPDF()">Tải về PDF</button>
+        <div id="exam-content" class="exam-container">
+            <div class="exam-header-block">
+                <div class="header-columns">
+                    <div class="header-left">
+                        <p>
+                            <strong>BỘ GIÁO DỤC VÀ ĐÀO TẠO</strong>
+                            <br> Trường ADVTV
+                        </p>
+                    </div>
+                    <div class="header-right">
+                        <p>
+                            <strong>ĐỀ KIỂM TRA</strong>
+                            <br> Môn: <strong><span id="subjectForm"></span></strong>
+                            <br>
+                            <em>Thời gian làm bài: <span id="timeForm"></span> phút 
+                            <br>(không kể thời gian phát đề)</em>
+                        </p>
+                    </div>
+                </div>
+                <div class="student-info">
+                    <p>
+                        <strong>Họ, tên học sinh:</strong> ..........................................................................................
+                    </p>
+                    <p>
+                        <strong>Lớp:</strong> ...............................................................................................
+                    </p>
+                    <p class="bailam-title">BÀI LÀM</p>
+                </div>
+            </div>
+            <div id="list-question"></div>
+        </div>
+        <!-- Thư viện html2pdf -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+        <script>            
+            const time = localStorage.getItem('examTime') || '';
+            let subject = '';
+            const subjectSelect = localStorage.getItem('subject') || '';
+            if (subjectSelect) {
+                subjects.forEach(sub => {
+                    if (sub.value === subjectSelect) {
+                        subject = sub.text;
+                    }
+                });
+            }
+            document.getElementById('timeForm').textContent = time;
+            document.getElementById('subjectForm').textContent = subject;
+
+            let questionss = JSON.parse(localStorage.getItem('questions')) || [];
+            let questionList = '';
+            console.log(questionss);
+
+            if (questionss.length > 0) {
+                questionss.forEach((ques, index) => {
+                    questionList += `<div class="question">`;
+                    questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                    questionList += `<ul class="options">`; 
+                    ques.options.forEach((opt, ind) => {
+                        let label = '';
+                        switch (ind) {
+                            case 0:
+                                label = 'A. ';
+                                break;
+                            case 1:
+                                label = 'B. ';
+                                break;
+                            case 2:
+                                label = 'C. ';
+                                break;
+                            case 3:
+                                label = 'D. ';
+                                break;
+                        }
+                        questionList += `<li>${label}${opt.context}</li>`;
+                    });
+                    questionList += `</ul>`;
+                    questionList += `</div>`;
+                });
+            }
+            let listQuestion = document.getElementById('list-question');
+            listQuestion.innerHTML = questionList;
+
+            function downloadPDF() {
+                const element = document.getElementById('exam-content');
+                const opt = {
+                    margin: 0.5,
+                    filename: 'de-thi.pdf',
+                    image: { 
+                        type: 'jpeg', 
+                        quality: 0.98 
+                    },
+                    html2canvas:  {
+                        scale: 1.5,
+                        scrollY: 0
+                    },
+                    jsPDF: {
+                        unit: 'in',
+                        format: 'a4',
+                        orientation: 'portrait'
+                    }
+                };
+
+                // Cho delay 100ms để đảm bảo DOM render xong
+                setTimeout(() => {
+                    html2pdf().set(opt).from(element).save();
+                }, 100);
+            }
+        </script>
+    </body>
+</html>

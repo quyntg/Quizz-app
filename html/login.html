@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../data/data.js"></script>
+        <title>A Quiz</title>
+        <style>
+            body {
+                background: #f5f6fa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }
+
+            .login-container {
+                background: #fff;
+                padding: 32px 24px;
+                border-radius: 12px;
+                box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+                width: 350px;
+                text-align: center;
+            }
+
+            .login-container h2 {
+                margin-bottom: 18px;
+                color: #2d3436;
+            }
+
+            .login-container #login-form {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .login-container input {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px 12px;
+                border: 2px solid #0984e3;
+                border-radius: 6px;
+                font-size: 16px;
+                outline: none;
+                transition: border-color 0.2s;
+                background: #f8fafd;
+            }
+
+            .login-container input:focus {
+                border-color: #74b9ff;
+                background: #fff;
+            }
+
+            .login-container button {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px 12px;
+                background: linear-gradient(90deg, #0984e3 60%, #74b9ff 100%);
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                font-size: 16px;
+                font-weight: 500;
+                margin-top: 20px;
+                cursor: pointer;
+                transition: background 0.2s, box-shadow 0.2s;
+                box-shadow: 0 2px 8px rgba(9,132,227,0.08);
+            }
+
+            .login-container button:hover {
+                background: linear-gradient(90deg, #74b9ff 60%, #0984e3 100%);
+                box-shadow: 0 4px 16px rgba(9,132,227,0.12);
+            }
+
+            .login-container .link {
+                display: block;
+                margin: 10px 0;
+                color: #636e72;
+                text-decoration: underline;
+                cursor: pointer;
+                font-size: 15px;
+            }
+
+            .error-message {
+                color: #d63031;
+                margin-bottom: 10px;
+                font-size: 15px;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            /* Modal styles */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            }
+
+            .modal-box {
+                background: #fff;
+                padding: 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+                width: 90%;
+                max-width: 400px;
+                text-align: center;
+            }
+
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #636e72;
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                cursor: pointer;
+            }
+
+            .modal-title {
+                font-size: 18px;
+                margin-bottom: 16px;
+                color: #2d3436;
+                font-weight: 500;
+            }
+
+            .modal-content {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 24px;
+                line-height: 27px;
+            }
+
+            .modal-content a {
+                color: #0984e3;
+                text-decoration: none;
+            }
+
+            .modal-content a:hover {
+                text-decoration: underline;
+            }
+
+            .modal-button {
+                padding: 10px 16px;
+                background: #0984e3;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background 0.2s, box-shadow 0.2s;
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 18px;
+                height: 18px;
+                border: 3px solid #fff;
+                border-top: 3px solid #0984e3;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                vertical-align: middle;
+                margin-right: 6px;
+            }
+
+            @keyframes spin {
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <h2 id="form-title">A Quiz</h2>
+            <div id="login-form">
+                <input type="text" id="login-username" placeholder="Tên đăng nhập" required>
+                <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                <div id="error" class="error-message hidden"></div>
+                <button id="loginBtn" onclick="login()">Đăng nhập</button>
+            </div>
+            <span class="link" onclick="showRegister()">Đăng ký tài khoản</span>
+            <span class="link" onclick="showForgot()">Quên mật khẩu?</span>
+        </div>
+
+        <!-- Modal Quên mật khẩu -->
+        <div class="modal-overlay" id="forgotModal">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeForgotModal()">&times;</button>
+                <div class="modal-title">Khôi phục mật khẩu</div>
+                <div class="modal-content">
+                    Vui lòng liên hệ <b>admin</b> để khôi phục mật khẩu.<br>
+                    Email: <a href="mailto:giaquy.adv@gmail.com">giaquy.adv@gmail.com</a><br>
+                    SĐT: <a href="tel:0914261688">0914 261 688</a>
+                </div>
+                <button class="modal-button" onclick="closeForgotModal()">Đóng</button>
+            </div>
+        </div>
+
+        <!-- Modal Đăng nhập thành công -->
+        <div class="modal-overlay" id="successModal">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeSuccessModal()">&times;</button>
+                <div class="modal-content" id="successMessage">Đăng nhập thành công!</div>
+                <button class="modal-button" onclick="goToCreate()">Tiếp tục</button>
+            </div>
+        </div>
+
+        <script>
+            function login() {
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value.trim();
+                const errorEl = document.getElementById("error");
+                const loginBtn = document.getElementById("loginBtn");
+
+                if (!username || !password) {
+                    errorEl.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Hiệu ứng quay và disable nút
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="spinner"></span> Đang đăng nhập...';
+
+                const url = ggApiUrl + `?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+                fetch(url)
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        localStorage.setItem('user', JSON.stringify(data.user || {}));
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = 'Đăng nhập';
+                        if (data.success) {
+                            errorEl.classList.add("hidden");
+                            document.getElementById('successMessage').textContent = data.message || "Bạn đã đăng nhập thành công!";
+                            document.getElementById('successModal').style.display = 'flex';
+                        } else {
+                            errorEl.textContent = data.message || "Sai thông tin đăng nhập.";
+                            errorEl.classList.remove("hidden");
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("❌ Lỗi khi gọi API:", err);
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = 'Đăng nhập';
+                        errorEl.textContent = "Không thể kết nối máy chủ.";
+                        errorEl.classList.remove("hidden");
+                    });
+            }
+
+            // Bấm Enter để login
+            document.getElementById('login-form').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    login();
+                }
+            });
+
+            function showRegister() {
+                window.location.href = 'register.html';
+            }
+
+            function showForgot() {
+                document.getElementById('forgotModal').style.display = 'flex';
+            }
+
+            function closeForgotModal() {
+                document.getElementById('forgotModal').style.display = 'none';
+            }
+
+            function goToCreate() {
+                window.location.href = "create.html";
+            }
+            function closeSuccessModal() {
+                document.getElementById('successModal').style.display = 'none';
+            }
+        </script>
+    </body>
+</html>

@@ -49,16 +49,66 @@
                 border-radius: 4px;
                 border: 1px solid #ccc;
             }
+
+            .user-greeting {
+                position: fixed;
+                top: 18px;
+                right: 32px;
+                z-index: 1000;
+                font-size: 16px;
+                color: #2c7be5;
+                font-weight: 500;
+                background: #fff;
+                padding: 8px 18px;
+                border-radius: 24px;
+                box-shadow: 0 2px 8px rgba(44,123,229,0.08);
+                cursor: pointer;
+            }
+
+            .greeting-menu {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: #fff;
+                border: 1px solid #dfe6e9;
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                min-width: 100px;
+                z-index: 10;
+                margin: 5px;
+            }
+            .greeting-menu button {
+                width: 100%;
+                background: none;
+                border: none;
+                color: #d63031;
+                font-size: 16px;
+                padding: 8px 0;
+                cursor: pointer;
+            }
+            .hidden { display: none; }
         </style>
-        <script src="../data/questions.js"></script>
+        <script src="../data/data.js"></script>
         <script src="../js/script.js"></script>
     </head>
     <body>
+        <div id="user-greeting" class="user-greeting">
+            <div id="greetingText"></div>
+            <div id="greetingMenu" class="greeting-menu hidden">
+                <button onclick="backToLogin()">Thoát</button>
+            </div>
+        </div>
         <div class="form-wrapper">
             <h2>Khởi động kỳ thi trắc nghiệm</h2>
             <div class="form-group">
                 <label for="teacherName">Tên giáo viên:</label>
                 <input type="text" id="teacherName" placeholder="Nguyễn Văn A" value="XXX" required />
+            </div>
+            <div class="form-group">
+                <label for="subject">Môn học:</label>
+                <select id="subject" required>
+                    <option value="">Chọn môn học</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="examTime">Thời gian làm bài (phút):</label>
@@ -98,6 +148,9 @@
             </button>
         </div>
         <script>
+            let user = JSON.parse(localStorage.getItem('user')) || {};
+            document.getElementById('teacherName').value = user.name || '';
+            localStorage.setItem('teacherName', user.name || '');
             // Thêm CSS hiệu ứng xoay cho icon
             const style = document.createElement('style');
             style.innerHTML = `
@@ -110,9 +163,22 @@
             `;
             document.head.appendChild(style);
 
+            // Tạo option cho select môn học từ mảng subjects
+            const subjectSelect = document.getElementById('subject');
+            if (subjectSelect && subjectSelect.options.length <= 1) {
+                subjects.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.value;
+                    opt.textContent = sub.text;
+                    subjectSelect.appendChild(opt);
+                });
+                document.getElementById('subject').value = user.subject || '';
+            }
+
             async function viewExam(type) {
                 const name = document.getElementById('teacherName').value;
                 const time = document.getElementById('examTime').value;
+                const subject = document.getElementById('subject').value;
                 const total = parseInt(document.getElementById('totalQuestions').value);
                 const easy = parseInt(document.getElementById('easyCount').value);
                 const medium = parseInt(document.getElementById('mediumCount').value);
@@ -132,7 +198,7 @@
 
                 try {
                     if (type === 0) {
-                        if (!name || !time) {
+                        if (!name || !time || !subject) {
                             alert("Vui lòng nhập đầy đủ thông tin.");
                             return;
                         }
@@ -171,9 +237,10 @@
                             const easy = parseInt(localStorage.getItem('easyCount')) || 0;
                             const medium = parseInt(localStorage.getItem('mediumCount')) || 0;
                             const hard = parseInt(localStorage.getItem('hardCount')) || 0;
+                            const subject = localStorage.getItem('subject') || "";
 
                             const response = await fetch(
-                                `https://script.google.com/macros/s/AKfycbwKwrgMhO6_2jPMe-QUKxKrHFCZDaqC8LaFT7WLwqb7vabSZSWPeQ1rj1WLrCFyo-Jf/exec?action=generateExam&total=${total}&easy=${easy}&medium=${medium}&hard=${hard}`
+                                ggApiUrl + `?action=generateExam&total=${total}&easy=${easy}&medium=${medium}&hard=${hard}&subject=${encodeURIComponent(subject)}`
                             );
 
                             if (!response.ok) throw new Error("Lỗi HTTP: " + response.status);
@@ -192,6 +259,7 @@
 
                     localStorage.setItem('isSubmitted', false);
                     localStorage.setItem('teacherName', name);
+                    localStorage.setItem('subject', subject);
                     localStorage.setItem('examTime', time);
                     localStorage.setItem('totalQuestions', total);
                     localStorage.setItem('easyCount', easy);
@@ -211,6 +279,29 @@
                     iconExcel.style.display = 'none';
                 }
             }
+
+            // Hiển thị chào + tên tài khoản ở góc phải trên
+            const teacherName = localStorage.getItem('teacherName') || '';
+            if (teacherName) {
+                document.getElementById('greetingText').innerHTML = `👋 Chào, <b>${teacherName}</b>`;
+            }
+
+            document.getElementById('user-greeting').addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = document.getElementById('greetingMenu');
+                console.log("Menu hiện tại:", menu);
+                menu.classList.remove('hidden');
+            });
+            function backToLogin() {
+                window.location.href = 'login.html';
+            }
+            // Đóng menu khi click ra ngoài
+            document.addEventListener('click', function(e) {
+                const menu = document.getElementById('greetingMenu');
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                }
+            });
         </script>
     </body>
 </html>

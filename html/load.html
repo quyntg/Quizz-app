@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="stylesheet" href="../css/style.css">
-        <script src="../data/questions.js"></script>
+        <script src="../data/data.js"></script>
         <script src="../js/script.js"></script>
         <title>Soạn câu hỏi trắc nghiệm</title>
         <style>
@@ -36,21 +36,24 @@
                 cursor: pointer;
             }
 
-            .q-item.active {
-                background: #007bff;
-                color: white;
-            }
+            /* .q-item.active {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            } */
 
             label {
                 font-weight: bold;
-                margin-top: 10px;
-                display: block;
+                width: 80vw;
+                max-width: 1100px;
             }
 
             input,
             textarea,
             select {
                 width: 100%;
+                display: flex;
+                flex-direction: column;
                 padding: 5px;
                 margin-top: 4px;
                 margin-bottom: 10px;
@@ -58,6 +61,8 @@
 
             textarea {
                 height: 60px;
+                background: none;
+                cursor: pointer;
             }
 
             button {
@@ -71,6 +76,49 @@
                 padding: 10px;
                 margin-top: 10px;
             }
+
+            #draftModal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.3);
+                z-index: 9999;
+                align-items: center;
+                justify-content: center;
+            }
+
+            #draftBody {
+                background: white;
+                max-width: 900px;
+                width: 60vw;
+                max-height: 90vh;
+                overflow: auto;
+                padding: 24px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                position: relative;
+            }
+
+            #closeDraft {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                font-size: 20px;
+            }
+
+            #draftFrame {
+                width: 60vw;
+                max-width: 100%;
+                height: 80vh;
+                border: none;
+                border-radius: 8px;
+                background: #f8f9fa;
+                display: block;
+            }
+
             @media (max-width: 768px) {
                 body {
                     flex-direction: column;
@@ -102,6 +150,8 @@
             <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
             <button onclick="generateJSON()" style="display: none;">✅ Tạo JSON</button>
             <button onclick="startExam()">💪 Bắt đầu làm bài</button>
+            <button onclick="startExam()">💪 Bắt đầu làm bài</button>
+            <button onclick="viewDraftToPrint()">🖨️ In bài thi</button>
             <div id="listContainer"></div>
         </div>
         <div id="editor">
@@ -110,6 +160,8 @@
             <input type="text" id="id">
             <label>Câu hỏi</label>
             <textarea id="question"></textarea>
+            <label>Môn học</label>
+            <select id="subject"></select>
             <label>Media (nếu có)</label>
             <input type="text" id="media">
             <label>Đáp án A</label>
@@ -137,7 +189,23 @@
                 <option value="hard">Khó</option>
             </select>
         </div>
+        <div id="draftModal">
+            <div id="draftBody">
+                <button id="closeDraft" onclick="closeDraftModal()">X</button>
+                <h2 id="draftTitle">Bản in bài thi</h2>
+                <iframe id="draftFrame" src=""></iframe>
+            </div>
+        </div>
         <script>
+            function viewDraftToPrint() {
+                document.getElementById('draftFrame').src = 'form.html';
+                document.getElementById('draftModal').style.display = 'flex';
+            }
+
+            function closeDraftModal() {
+                document.getElementById('draftModal').style.display = 'none';
+                document.getElementById('draftFrame').src = '';
+            }
             let questionsList = [];
             let currentIndex = -1;
 
@@ -159,9 +227,20 @@
                             else if (q.correct == 4 || q.correct == "4") correct = "D";
                             else correct = (q.correct || "").toUpperCase();
                         }
+                if (data.length > 0) {					
+                    questionsList = data.map(q => {
+                        // Nếu correct là context, xác định đúng là A/B/C/D
+                        let correct = "";   
+                        if (q.correct == (q.options?.[0]?.id)) correct = "A";
+                        else if (q.correct == (q.options?.[1]?.id)) correct = "B";
+                        else if (q.correct == (q.options?.[2]?.id)) correct = "C";
+                        else if (q.correct == (q.options?.[3]?.id)) correct = "D";
+                        else correct = ""; // Không khớp đáp án nào
+
                         return {
                             id: q.id,
                             question: q.question,
+                            subject: q.subject || "",
                             media: q.media || "",
                             A: q.options?.[0]?.context || q.A || "",
                             B: q.options?.[1]?.context || q.B || "",
@@ -172,6 +251,9 @@
                             difficulty: q.difficulty || "dễ"
                         };
                     });
+                    renderList();
+                    selectQuestion(0);
+                }
                     renderList();
                     selectQuestion(0);
                 }
@@ -193,6 +275,7 @@
                 const newQuestion = {
                     id: `Q${questionsList.length + 1}`,
                     question: "",
+                    subject: "",
                     media: "",
                     A: "",
                     B: "",
@@ -211,6 +294,7 @@
                 const q = questionsList[index];
                 document.getElementById("id").value = q.id;
                 document.getElementById("question").value = q.question;
+                document.getElementById("subject").value = q.subject;
                 document.getElementById("media").value = q.media;
                 document.getElementById("A").value = q.A;
                 document.getElementById("B").value = q.B;
@@ -228,6 +312,7 @@
                 const q = questionsList[currentIndex];
                 q.id = document.getElementById("id").value;
                 q.question = document.getElementById("question").value;
+                q.subject = document.getElementById("subject").value;
                 q.media = document.getElementById("media").value;
                 q.A = document.getElementById("A").value;
                 q.B = document.getElementById("B").value;
@@ -238,7 +323,7 @@
                 q.difficulty = document.getElementById("difficulty").value;
                 renderList();
             }
-            ["id", "question", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
+            ["id", "question", "subject", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
                 document.getElementById(id).addEventListener("input", updateCurrent);
             });
 
@@ -254,6 +339,7 @@
                     return {
                         id: q.id || `Q${index + 1}`,
                         question: q.question,
+                        subject: q.subject || "",
                         media: q.media || "",
                         options: [
                             { context: q.A || "", id: 1 },
@@ -271,6 +357,17 @@
             }
             // Khởi tạo từ JSON sẵn
             window.onload = () => {				
+                loadFromJSON(JSON.parse(localStorage.getItem('questions')));
+            };
+                const subjectSelect = document.getElementById('subject');
+                if (subjectSelect && subjectSelect.options.length <= 1) {
+                    subjects.forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub.value;
+                        opt.textContent = sub.text;
+                        subjectSelect.appendChild(opt);
+                    });
+                }
                 loadFromJSON(JSON.parse(localStorage.getItem('questions')));
             };
         </script>

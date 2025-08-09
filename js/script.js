@@ -115,22 +115,22 @@ function readFile(file) {
                 difficulty = "hard";
             }
 
-            return {
-                id: row.id || `Q${index + 1}`,
-                question: row.question || "",
-                media: row.media || "",
-                options: [
-                    { context: row.A || "", id: 1 },
-                    { context: row.B || "", id: 2 },
-                    { context: row.C || "", id: 3 },
-                    { context: row.D || "", id: 4 }
-                ],
-                correct: correctId ? correctId.toString() : "", // Lưu vị trí đáp án đúng (1-4) dạng chuỗi
-                description: row.description || "",
-                difficulty,
-                note: row.note || "",
-            };
-        });
+			return {
+				id: row.id || `Q${index + 1}`,
+				question: row.question || "",
+				media: row.media || "",
+				options: [
+					{ context: row.A || "", id: 1 },
+					{ context: row.B || "", id: 2 },
+					{ context: row.C || "", id: 3 },
+					{ context: row.D || "", id: 4 }
+				],
+				correct,
+				description: row.description || "",
+				difficulty,
+				note: row.note || "",
+			};
+		});
 		
 		if (questions.length < localStorage.getItem('totalQuestions')) {
 			alert(`❌ Số lượng câu hỏi của đề (${localStorage.getItem('totalQuestions')}) vượt quá giới hạn tối đa (${questions.length})`);
