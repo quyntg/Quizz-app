@@ -93,27 +93,33 @@
 
             @media (max-width: 600px) {
                 body {
-                    padding: 8px;
+                    padding: 0;
+                    background: #f4f4f4;
                 }
                 .form-wrapper {
-                    max-width: 100%;
-                    padding: 12px;
-                    border-radius: 0;
-                    box-shadow: none;
+                    max-width: 98vw;
+                    margin: 24px auto 0 auto;
+                    padding: 12px 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 12px rgba(44,123,229,0.10);
                 }
                 h2 {
-                    font-size: 22px;
+                    font-size: 20px;
+                    margin-bottom: 18px;
                 }
                 .form-group label {
                     font-size: 15px;
                 }
                 input, select {
                     font-size: 15px;
-                    padding: 8px 6px;
+                    padding: 10px 8px;
                 }
                 button {
                     font-size: 15px;
-                    padding: 8px 12px;
+                    padding: 12px 0;
+                    margin-top: 10px;
+                    width: 100%;
+                    border-radius: 8px;
                 }
                 .user-greeting {
                     top: 8px;
@@ -124,6 +130,14 @@
                 .greeting-menu {
                     min-width: 80px;
                     font-size: 14px;
+                }
+            }
+            /* Tối ưu thêm cho nút trên mobile */
+            @media (max-width: 600px) {
+                #btnBank, #btnExcel {
+                    display: block;
+                    width: 100%;
+                    margin-bottom: 8px;
                 }
             }
         </style>
