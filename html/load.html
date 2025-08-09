@@ -1,232 +1,257 @@
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="../css/style.css">
-        <script src="../data/data.js"></script>
-        <script src="../js/script.js"></script>
-        <title>Soạn câu hỏi trắc nghiệm</title>
-        <style>
-            body {
-                display: flex;
-                height: 100vh;
-                font-family: sans-serif;
-                margin: 0;
-            }
-
-            #questionList {
-                width: 30%;
-                background: #f4f4f4;
-                border-right: 1px solid #ccc;
-                padding: 10px;
-                overflow-y: auto;
-            }
-
+<head>
+    <meta charset="UTF-8" />
+    <title>Soạn câu hỏi trắc nghiệm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        :root {
+            --primary: #2c7be5;
+            --primary-dark: #1a5fb4;
+            --danger: #d63031;
+            --bg: #f4f4f4;
+            --white: #fff;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        body {
+            background: var(--bg);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+        }
+        #questionList {
+            width: 28%;
+            min-width: 220px;
+            background: #f4f4f4;
+            border-right: 1px solid #ccc;
+            padding: 32px 18px 18px 18px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        #editor {
+            width: 72%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 40px 40px 40px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+        }
+        h2 {
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 18px;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        .form-group, #editor label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        label {
+            font-weight: 500;
+            color: #222;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+        input, select, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #dfe6e9;
+            font-size: 1.08rem;
+            background: #f8fafd;
+            margin-top: 6px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(44,123,229,0.04);
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #2c7be5;
+            outline: none;
+            box-shadow: 0 4px 16px rgba(44,123,229,0.10);
+        }
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        .q-item {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            margin: 6px 0;
+            background: white;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .q-item.active {
+            background: #2c7be5;
+            color: white;
+        }
+        #draftModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        #draftBody {
+            background: white;
+            max-width: 900px;
+            width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+            padding: 40px 32px 32px 32px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        #closeDraft {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 20px;
+        }
+        #draftFrame {
+            width: 100%;
+            height: 80vh;
+            border: none;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: block;
+        }
+        @media (max-width: 900px) {
             #editor {
-                width: 70%;
-                padding: 20px;
-                overflow-y: auto;
+                max-width: 100vw;
+                padding: 18px 8px 12px 8px;
+                border-radius: 0;
+                box-shadow: none;
             }
-
-            .q-item {
-                padding: 6px 10px;
-                border: 1px solid #ddd;
-                margin: 5px 0;
-                background: white;
-                cursor: pointer;
-            }
-
-            /* .q-item.active {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            } */
-
-            label {
-                font-weight: bold;
-                width: 80vw;
-                max-width: 1100px;
-            }
-
-            input,
-            textarea,
-            select {
-                width: 100%;
-                display: flex;
+        }
+        @media (max-width: 768px) {
+            body {
                 flex-direction: column;
-                padding: 5px;
-                margin-top: 4px;
-                margin-bottom: 10px;
             }
-
-            textarea {
-                height: 60px;
-                background: none;
-                cursor: pointer;
+            #questionList, #editor {
+                width: 100%;
+                min-width: unset;
+                height: auto;
             }
-
+            #questionList {
+                border-right: none;
+                border-bottom: 1px solid #ccc;
+                padding: 18px 8px 12px 8px;
+            }
+            #editor {
+                padding: 18px 8px 12px 8px;
+            }
+            h2 {
+                font-size: 1.3rem;
+                margin-top: 32px;
+            }
+            label {
+                font-size: 15px;
+            }
+            input, select, textarea {
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 1rem;
+                padding: 10px 8px;
+                border-radius: 7px;
+            }
             button {
-                padding: 8px 12px;
+                font-size: 1.05rem;
+                padding: 12px 0;
                 margin-top: 10px;
+                border-radius: 8px;
             }
-
-            #output {
-                white-space: pre-wrap;
-                background: #eee;
-                padding: 10px;
-                margin-top: 10px;
-            }
-
-            #draftModal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: rgba(0, 0, 0, 0.3);
-                z-index: 9999;
-                align-items: center;
-                justify-content: center;
-            }
-
+        }
+        @media (max-width: 600px) {
             #draftBody {
-                background: white;
-                max-width: 900px;
-                width: 60vw;
-                max-height: 90vh;
-                overflow: auto;
-                padding: 24px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-                position: relative;
+                padding: 12px 4px 8px 4px;
+                border-radius: 0;
+                box-shadow: none;
             }
-
-            #closeDraft {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                font-size: 20px;
+            h2 {
+                font-size: 22px;
             }
-
-            #draftFrame {
-                width: 60vw;
-                max-width: 100%;
-                height: 80vh;
-                border: none;
-                border-radius: 8px;
-                background: #f8f9fa;
-                display: block;
+            button {
+                font-size: 1rem;
+                padding: 12px !important;
+                border-radius: 9px;
             }
-
-            @media (max-width: 768px) {
-                body {
-                    flex-direction: column;
-                }
-
-                #questionList, #editor {
-                    width: 100%;
-                    height: auto;
-                }
-
-                #questionList {
-                    border-right: none;
-                    border-bottom: 1px solid #ccc;
-                }
-
-                #editor {
-                    padding: 12px;
-                }
-
-                input, textarea, select {
-                    font-size: 16px;
-                }
+            input, select, textarea {
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 0.98rem;
+                padding: 10px 8px;
+                border-radius: 7px;
             }
-
-            @media (max-width: 600px) {
-                body {
-                    padding: 8px;
-                }
-                .form-wrapper {
-                    max-width: 100%;
-                    padding: 12px;
-                    border-radius: 0;
-                    box-shadow: none;
-                }
-                h2 {
-                    font-size: 22px;
-                }
-                .form-group label {
-                    font-size: 15px;
-                }
-                input, select {
-                    font-size: 15px;
-                    padding: 8px 6px;
-                }
-                button {
-                    font-size: 15px;
-                    padding: 8px 12px;
-                }
-                .user-greeting {
-                    top: 8px;
-                    right: 8px;
-                    font-size: 14px;
-                    padding: 6px 12px;
-                }
-            }
-
-        </style>
-    </head>
-    <body>
-        <div id="questionList">
-            <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
-            <button onclick="startExam()">💪 Bắt đầu làm bài</button>
-            <button onclick="viewDraftToPrint()">🖨️ In bài thi</button>
-            <div id="listContainer"></div>
+        }
+    </style>
+    <script src="../data/data.js"></script>
+    <script src="../js/script.js"></script>
+</head>
+<body>
+    <div id="questionList">
+        <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
+        <button onclick="startExam()">💪 Bắt đầu làm bài</button>
+        <button onclick="viewDraftToPrint()">🖨️ In bài thi</button>
+        <div id="listContainer"></div>
+    </div>
+    <div id="editor">
+        <h2 id="editorTitle">Câu hỏi</h2>
+        <label>ID</label>
+        <input type="text" id="id">
+        <label>Câu hỏi</label>
+        <textarea id="question"></textarea>
+        <label>Môn học</label>
+        <select id="subject"></select>
+        <label>Media (nếu có)</label>
+        <input type="text" id="media">
+        <label>Đáp án A</label>
+        <input type="text" id="A">
+        <label>Đáp án B</label>
+        <input type="text" id="B">
+        <label>Đáp án C</label>
+        <input type="text" id="C">
+        <label>Đáp án D</label>
+        <input type="text" id="D">
+        <label>Đáp án đúng (A/B/C/D)</label>
+        <select id="correct">
+            <option value="">Chọn đáp án</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+        </select>
+        <label>Giải thích</label>
+        <textarea id="description"></textarea>
+        <label>Độ khó</label>
+        <select id="difficulty">
+            <option value="easy">Dễ</option>
+            <option value="medium">Trung bình</option>
+            <option value="hard">Khó</option>
+        </select>
+    </div>
+    <div id="draftModal">
+        <div id="draftBody">
+            <button id="closeDraft" onclick="closeDraftModal()">X</button>
+            <h2 id="draftTitle">Bản in bài thi</h2>
+            <iframe id="draftFrame" src=""></iframe>
         </div>
-        <div id="editor">
-            <h2 id="editorTitle">Câu hỏi</h2>
-            <label>ID</label>
-            <input type="text" id="id">
-            <label>Câu hỏi</label>
-            <textarea id="question"></textarea>
-            <label>Môn học</label>
-            <select id="subject"></select>
-            <label>Media (nếu có)</label>
-            <input type="text" id="media">
-            <label>Đáp án A</label>
-            <input type="text" id="A">
-            <label>Đáp án B</label>
-            <input type="text" id="B">
-            <label>Đáp án C</label>
-            <input type="text" id="C">
-            <label>Đáp án D</label>
-            <input type="text" id="D">
-            <label>Đáp án đúng (A/B/C/D)</label>
-            <select id="correct">
-                <option value="">Chọn đáp án</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-            </select>
-            <label>Giải thích</label>
-            <textarea id="description"></textarea>
-            <label>Độ khó</label>
-            <select id="difficulty">
-                <option value="easy">Dễ</option>
-                <option value="medium">Trung bình</option>
-                <option value="hard">Khó</option>
-            </select>
-        </div>
-        <div id="draftModal">
-            <div id="draftBody">
-                <button id="closeDraft" onclick="closeDraftModal()">X</button>
-                <h2 id="draftTitle">Bản in bài thi</h2>
-                <iframe id="draftFrame" src=""></iframe>
-            </div>
-        </div>
-        <script>
+    </div>
+    <script>
             function viewDraftToPrint() {
                 document.getElementById('draftFrame').src = 'form.html';
                 document.getElementById('draftModal').style.display = 'flex';
@@ -384,6 +409,6 @@
                 }
                 loadFromJSON(JSON.parse(localStorage.getItem('questions')));
             };
-        </script>
-    </body>
+    </script>
+</body>
 </html>

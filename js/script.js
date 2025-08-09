@@ -432,7 +432,8 @@ function closeResultModal() {
 }
 
 function newExam() {
-	localStorage.clear();
+	localStorage.setItem('isSubmitted', false);
+	localStorage.setItem('questions', JSON.stringify([]));
 	window.location.href = 'create.html';
 }
 
