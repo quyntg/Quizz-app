@@ -139,6 +139,30 @@
                 font-size: 15px;
                 cursor: pointer;
             }
+
+            /* Hiệu ứng xoay cho icon */
+            .rotating-icon {
+                animation: rotate 1s linear infinite;
+            }
+            @keyframes rotate {
+                100% { transform: rotate(360deg); }
+            }
+
+            /* Modern spinner */
+            .modern-spinner {
+                display: inline-block;
+                width: 22px;
+                height: 22px;
+                border: 3px solid #3498db;
+                border-top: 3px solid #fff;
+                border-radius: 50%;
+                animation: modern-spin 0.8s linear infinite;
+                vertical-align: middle;
+                margin-right: 6px;
+            }
+            @keyframes modern-spin {
+                100% { transform: rotate(360deg); }
+            }
         </style>
     </head>
     <body>
@@ -187,11 +211,25 @@
                 </div>
                 <div class="form-group">
                     <label for="grade">Khối <span class="required">*</span></label>
-                    <input type="number" id="grade" name="grade" min="1" max="12" required>
+                    <select id="grade" name="grade" required>
+                        <option value="">-- Chọn khối --</option>
+                        <option value="1">Khối 1</option>
+                        <option value="2">Khối 2</option>
+                        <option value="3">Khối 3</option>
+                        <option value="4">Khối 4</option>
+                        <option value="5">Khối 5</option>
+                        <option value="6">Khối 6</option>
+                        <option value="7">Khối 7</option>
+                        <option value="8">Khối 8</option>
+                        <option value="9">Khối 9</option>
+                        <option value="10">Khối 10</option>
+                        <option value="11">Khối 11</option>
+                        <option value="12">Khối 12</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="subject">Môn <span class="required">*</span></label>                    
-                    <select id="subject" required>
+                    <select id="subject" name="subject" required>
                         <option value="">Chọn môn học</option>
                     </select>
                 </div>
@@ -200,7 +238,12 @@
                     <textarea id="note" name="note" rows="3"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button type="submit">Đăng ký</button>
+                    <button type="submit" id="btnRegister">
+                        <span id="iconRegister" style="display:none;vertical-align:middle;">
+                            <span class="modern-spinner"></span>
+                        </span>
+                        Đăng ký
+                    </button>
                 </div>
             </form>
         </div>
@@ -210,7 +253,7 @@
                 <button class="modal-close" onclick="closeResultModal()">&times;</button>
                 <div class="modal-title" id="resultTitle">Kết quả đăng ký</div>
                 <div class="modal-content" id="resultContent"></div>
-                <button class="close-button" onclick="closeResultModal()">Đóng</button>
+                <button class="close-button" onclick="closeResultModal()">OK</button>
             </div>
         </div>
         <script>
@@ -239,35 +282,82 @@
                 document.getElementById('registerForm').reset();
             }
 
+            // Hiệu ứng xoay cho icon
+            const style = document.createElement('style');
+            style.innerHTML = `
+            .rotating-icon {
+                animation: rotate 1s linear infinite;
+            }
+            @keyframes rotate {
+                100% { transform: rotate(360deg); }
+            }
+            `;
+            document.head.appendChild(style);
+
             document.getElementById('registerForm').addEventListener('submit', function(e) {
                 e.preventDefault();
+                const btn = document.getElementById('btnRegister');
+                const icon = document.getElementById('iconRegister');
+                btn.disabled = true;
+                icon.style.display = 'inline-block';
+
                 // Validate số điện thoại thêm lần nữa
                 const phone = document.getElementById('phone').value;
                 const phoneRegex = /^0[0-9]{9}$/;
                 if (!phoneRegex.test(phone)) {
                     showResultModal('Lỗi đăng ký', 'Số điện thoại không hợp lệ!');
+                    btn.disabled = false;
+                    icon.style.display = 'none';
                     return;
                 }
+
                 // Lấy dữ liệu từ form
                 const formData = {};
                 new FormData(this).forEach((value, key) => {
-                    formData[key] = value;
+                    if (key === 'id' || key === 'phone') {
+                        formData[key] = String(value);
+                    } else if (key === 'birthday') {
+                        // Format ngày sinh thành dd/mm/yyyy
+                        if (value) {
+                            const d = new Date(value);
+                            const day = String(d.getDate()).padStart(2, '0');
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const year = d.getFullYear();
+                            formData[key] = `${day}/${month}/${year}`;
+                        } else {
+                            formData[key] = '';
+                        }
+                    } else {
+                        formData[key] = value;
+                    }
                 });
-                // Gửi dữ liệu về Google Apps Script
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(function(res) {
-                        showResultModal('Đăng ký thành công', 'Bạn đã đăng ký thành công!');
+                formData['action'] = 'register';
+                // Gửi dữ liệu lên Google Apps Script bằng fetch
+                console.log('Gửi dữ liệu đăng ký:', formData);
+                fetch(ggApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showResultModal('Đăng ký thành công', 'Chúc mừng bạn đã đăng ký thành công!<br>Vui lòng chờ <b>ADMIN</b> hoặc liên hệ <a href="tel:0914261688">0914 261 688</a><br> để kích hoạt tài khoản.');
                         document.getElementById('registerForm').reset();
                         checkRegister = 1;
-                    }).withFailureHandler(function(err) {
-                        showResultModal('Lỗi đăng ký', 'Đăng ký thất bại! Vui lòng thử lại.');
+                    } else {
+                        showResultModal('Lỗi đăng ký', data.message || 'Đăng ký thất bại! Vui lòng thử lại.');
                         checkRegister = 0;
-                    }).registerAccount(formData);
-                } else {
-                    // Nếu không có Google Apps Script, hiển thị demo
-                    showResultModal('Đăng ký thành công', 'Bạn đã đăng ký thành công!');
-                    checkRegister = 1;
-                }
+                    }
+                })
+                .catch(error => {
+                    showResultModal('Lỗi đăng ký', 'Đăng ký thất bại! Vui lòng thử lại.');
+                    checkRegister = 0;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    icon.style.display = 'none';
+                });
             });
         </script>
     </body>
