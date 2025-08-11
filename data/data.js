@@ -1005,6 +1005,10 @@ let questions = [
 
 let subjects = [
     {
+		"value": "all",
+		"text": "Tổng hợp"
+	},
+    {
 		"value": "math",
 		"text": "Toán học"
 	},
@@ -1058,11 +1062,7 @@ let subjects = [
 	},
 	{
 		"value": "art",
-		"text": "Mỹ thuật"
-	},
-	{
-		"value": "music",
-		"text": "Âm nhạc"
+		"text": "Nghệ thuật"
 	},
 	{
 		"value": "moral_education",

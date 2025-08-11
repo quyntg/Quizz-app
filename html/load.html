@@ -335,8 +335,17 @@
                 document.getElementById("B").value = q.B;
                 document.getElementById("C").value = q.C;
                 document.getElementById("D").value = q.D;
-                // Đảm bảo correct là A/B/C/D, không khoảng trắng, chữ hoa
-                document.getElementById("correct").value = (q.correct || "").toUpperCase().trim();
+                // Ưu tiên correctId, nếu có thì chuyển sang A/B/C/D
+                let correctVal = "";
+                if (typeof q.correctId !== 'undefined' && q.correctId !== null && q.correctId !== "") {
+                    if (q.correctId == 1) correctVal = "A";
+                    else if (q.correctId == 2) correctVal = "B";
+                    else if (q.correctId == 3) correctVal = "C";
+                    else if (q.correctId == 4) correctVal = "D";
+                } else if (q.correct) {
+                    correctVal = q.correct.toString().toUpperCase().trim();
+                }
+                document.getElementById("correct").value = correctVal;
                 document.getElementById("description").value = q.description;
                 document.getElementById("difficulty").value = q.difficulty;
                 renderList();
@@ -353,7 +362,13 @@
                 q.B = document.getElementById("B").value;
                 q.C = document.getElementById("C").value;
                 q.D = document.getElementById("D").value;
-                q.correct = document.getElementById("correct").value.toUpperCase();
+                // Khi lưu đáp án đúng, chuyển từ A/B/C/D thành 1/2/3/4
+                let correctVal = document.getElementById("correct").value.toUpperCase();
+                if (correctVal === "A") q.correct = 1;
+                else if (correctVal === "B") q.correct = 2;
+                else if (correctVal === "C") q.correct = 3;
+                else if (correctVal === "D") q.correct = 4;
+                else q.correct = correctVal;
                 q.description = document.getElementById("description").value;
                 q.difficulty = document.getElementById("difficulty").value;
                 renderList();

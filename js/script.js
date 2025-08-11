@@ -47,18 +47,16 @@ function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, 
 
     // 🔄 Trộn câu hỏi
     exam = shuffleArray(exam);
-
+	
     // 🔄 Trộn đáp án từng câu
     exam = exam.map((q) => {
         const options = shuffleArray(q.options); // Trộn mảng đáp án
-
-        // Xác định đáp án đúng mới dựa vào id cũ (correct là vị trí 1-4 trước khi trộn)
         let oldCorrectId = q.correct ? parseInt(q.correct) : null;
-        let correctOption = oldCorrectId ? q.options[oldCorrectId - 1] : null;
-        // Tìm vị trí mới của đáp án đúng sau khi trộn
+        // Xác định đáp án đúng mới dựa vào nội dung đáp án đúng (q.correct là context)
+        let correctOption = q.options.find(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase());
         let newCorrect = "";
         if (correctOption) {
-            newCorrect = options.findIndex(opt => opt.context === correctOption.context) + 1;
+            newCorrect = options.findIndex(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase()) + 1;
         }
         return {
             ...q,
@@ -114,18 +112,19 @@ function readFile(file) {
             } else if (row.difficulty === "khó") {
                 difficulty = "hard";
             }
-
+			
 			return {
 				id: row.id || `Q${index + 1}`,
 				question: row.question || "",
 				media: row.media || "",
+				subject: row.subject || "",
 				options: [
 					{ context: row.A || "", id: 1 },
 					{ context: row.B || "", id: 2 },
 					{ context: row.C || "", id: 3 },
 					{ context: row.D || "", id: 4 }
 				],
-				correct,
+				correct: row.correct,
 				description: row.description || "",
 				difficulty,
 				note: row.note || "",
