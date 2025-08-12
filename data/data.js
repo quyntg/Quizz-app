@@ -1013,6 +1013,10 @@ let subjects = [
 		"text": "Toán học"
 	},
 	{
+		"value": "vietnamese",
+		"text": "Tiếng Việt"
+	},
+	{
 		"value": "literature",
 		"text": "Ngữ văn"
 	},

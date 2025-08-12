@@ -118,6 +118,7 @@ function readFile(file) {
 				question: row.question || "",
 				media: row.media || "",
 				subject: row.subject || "",
+				grade: row.grade || "",
 				options: [
 					{ context: row.A || "", id: 1 },
 					{ context: row.B || "", id: 2 },

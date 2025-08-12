@@ -194,6 +194,12 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="grade">Khối:</label>
+            <select id="grade" required>
+                <option value="">Chọn khối</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="examTime">Thời gian làm bài (phút):</label>
             <input type="number" id="examTime" min="1" value="30" required />
         </div>
@@ -234,6 +240,7 @@
         let user = JSON.parse(localStorage.getItem('user')) || {};
         document.getElementById('teacherName').value = user.name || '';
         localStorage.setItem('teacherName', user.name || '');
+        localStorage.setItem('school', user.school || '');
 
         // Tạo option cho select môn học từ mảng subjects
         const subjectSelect = document.getElementById('subject');
@@ -247,10 +254,31 @@
             document.getElementById('subject').value = user.subject || '';
         }
 
+        // Tạo option cho select khối dựa vào user.schoolLevel
+        const gradeSelect = document.getElementById('grade');
+        if (gradeSelect && gradeSelect.options.length <= 1) {
+            let gradeOptions = [];
+            if (user.schoolLevel === 'primary') {
+                gradeOptions = ['1', '2', '3', '4', '5'];
+            } else if (user.schoolLevel === 'secondary') {
+                gradeOptions = ['6', '7', '8', '9'];
+            } else if (user.schoolLevel === 'high') {
+                gradeOptions = ['10', '11', '12'];
+            }
+            gradeOptions.forEach(gr => {
+                const opt = document.createElement('option');
+                opt.value = gr;
+                opt.textContent = gr;
+                gradeSelect.appendChild(opt);
+            });
+            gradeSelect.value = user.grade || '';
+        }
+
         async function viewExam(type) {
             const name = document.getElementById('teacherName').value;
             const time = document.getElementById('examTime').value;
             const subject = document.getElementById('subject').value;
+            const grade = document.getElementById('grade').value;
             const total = parseInt(document.getElementById('totalQuestions').value);
             const easy = parseInt(document.getElementById('easyCount').value);
             const medium = parseInt(document.getElementById('mediumCount').value);
@@ -270,12 +298,12 @@
 
             try {
                 if (type === 0) {
-                    if (!name || !time || !subject) {
+                    if (!name || !time || !subject || !grade) {
                         alert("Vui lòng nhập đầy đủ thông tin.");
                         return;
                     }
                 } else if (type === 1) {
-                    if (!name || !time || !file) {
+                    if (!name || !time || !file || !grade) {
                         alert("Vui lòng nhập đầy đủ thông tin.");
                         return;
                     }
@@ -322,6 +350,7 @@
                 localStorage.setItem('isSubmitted', false);
                 localStorage.setItem('teacherName', name);
                 localStorage.setItem('subject', subject);
+                localStorage.setItem('grade', grade);
                 localStorage.setItem('examTime', time);
                 localStorage.setItem('totalQuestions', total);
                 localStorage.setItem('easyCount', easy);
@@ -342,6 +371,7 @@
 
         // Hiển thị chào + tên tài khoản ở góc phải trên
         const teacherName = localStorage.getItem('teacherName') || '';
+        const grade = localStorage.getItem('grade') || '';
         if (teacherName) {
             document.getElementById('greetingText').innerHTML = `👋 Chào, <b>${teacherName}</b>`;
         }
