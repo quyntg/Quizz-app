@@ -206,6 +206,7 @@
     <div id="questionList">
         <button onclick="addQuestion()" style="display: none;">➕ Thêm câu</button>
         <button onclick="startExam()">💪 Bắt đầu làm bài</button>
+        <button onclick="saveExam()">💾 Lưu đề thi</button>
         <button onclick="viewDraftToPrint()">🖨️ In bài thi</button>
         <div id="listContainer"></div>
     </div>
@@ -431,6 +432,53 @@
                 }
                 loadFromJSON(JSON.parse(localStorage.getItem('questions')));
             };
+
+            function saveExam() {
+                let user = JSON.parse(localStorage.getItem('user')) || {};
+                let form = {
+                    easy: localStorage.getItem('easyCount') || 0,
+                    medium: localStorage.getItem('mediumCount') || 0,
+                    hard: localStorage.getItem('hardCount') || 0,
+                }
+                let listQ = '';
+                questionsList.forEach(q => {
+                    if (listQ == '') {
+                        listQ = q.id;
+                    } else {
+                        listQ += `,${q.id}`;
+                    } 
+                });
+                const examData = {
+                    action: 'saveExam',
+                    name: localStorage.getItem('examName') || '',
+                    teacherId: user.id || '',
+                    school: localStorage.getItem('school') || '',
+                    subject: localStorage.getItem('subject') || '',
+                    grade: localStorage.getItem('grade') || '',
+                    time: localStorage.getItem('examTime') || '',
+                    total: localStorage.getItem('totalQuestions') || '',
+                    form: JSON.stringify(form) || '',
+                    list: JSON.stringify(listQ) || '',
+                    schoolLevel: user.schoolLevel || ''
+                };
+
+                console.log("examData---", examData);
+                fetch(ggApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(examData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                    } else {
+                    }
+                })
+                .catch(error => {
+                })
+                .finally(() => {
+                });
+            }
     </script>
 </body>
 </html>

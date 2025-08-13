@@ -182,10 +182,14 @@
         </div>
     </div>
     <div class="form-wrapper">
-        <h2>Khởi động kỳ thi trắc nghiệm</h2>
+        <h2>Tạo đề thi</h2>
         <div class="form-group">
             <label for="teacherName">Tên giáo viên:</label>
             <input type="text" id="teacherName" placeholder="Nguyễn Văn A" required />
+        </div>
+        <div class="form-group">
+            <label for="examName">Tên đề thi:</label>
+            <input type="text" id="examName" placeholder="" required />
         </div>
         <div class="form-group">
             <label for="subject">Môn học:</label>
@@ -276,6 +280,7 @@
 
         async function viewExam(type) {
             const name = document.getElementById('teacherName').value;
+            const examName = document.getElementById('examName').value;
             const time = document.getElementById('examTime').value;
             const subject = document.getElementById('subject').value;
             const grade = document.getElementById('grade').value;
@@ -349,6 +354,7 @@
                 }
                 localStorage.setItem('isSubmitted', false);
                 localStorage.setItem('teacherName', name);
+                localStorage.setItem('examName', examName);
                 localStorage.setItem('subject', subject);
                 localStorage.setItem('grade', grade);
                 localStorage.setItem('examTime', time);

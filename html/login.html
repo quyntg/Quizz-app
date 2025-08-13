@@ -212,7 +212,7 @@
             <div class="modal-box">
                 <button class="modal-close" onclick="closeSuccessModal()">&times;</button>
                 <div class="modal-content" id="successMessage">Đăng nhập thành công!</div>
-                <button class="modal-button" onclick="goToCreate()">Tiếp tục</button>
+                <button class="modal-button" onclick="goToInfo()">Tiếp tục</button>
             </div>
         </div>
 
@@ -283,8 +283,8 @@
                 document.getElementById('forgotModal').style.display = 'none';
             }
 
-            function goToCreate() {
-                window.location.href = "create.html";
+            function goToInfo() {
+                window.location.href = "info.html";
             }
             function closeSuccessModal() {
                 document.getElementById('successModal').style.display = 'none';

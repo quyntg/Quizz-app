@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin giáo viên</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../data/data.js"></script>
+    <style>
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .form-container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .info-group {
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #2c7be5;
+            min-width: 110px;
+            margin-bottom: 0;
+        }
+        .info-value {
+            font-size: 1.08rem;
+            color: #222;
+            margin-bottom: 0;
+            flex: 1;
+        }
+        .exam-list-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #1a5fb4;
+        }
+        .exam-item {
+            background: #e3e3e3;
+            border-radius: 8px;
+            padding: 12px 32px 12px 16px; /* tăng padding phải để đủ chỗ cho nút */
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(44,123,229,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .exam-title {
+            font-weight: 500;
+            color: #222;
+        }
+        .exam-meta {
+            font-size: 0.95rem;
+            color: #666;
+            padding-right: 50px; /* đủ chỗ cho nút bên phải */
+            word-break: break-word;
+        }
+        .create-btn {
+            display: block;
+            width: 100%;
+            margin: 24px auto 0 auto;
+            padding: 14px 0;
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(44,123,229,0.06);
+            transition: background 0.2s;
+        }
+        .create-btn:hover {
+            background: #1a5fb4;
+        }
+        .exam-enter-btn {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            padding: 4px 10px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(44,123,229,0.08);
+            transition: background 0.2s;
+        }
+        .exam-enter-btn:hover {
+            background: #1a5fb4;
+        }
+        @media (max-width: 600px) {
+            .form-container {
+                max-width: 100vw;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 18px 8px 12px 8px;
+            }
+            .create-btn {
+                font-size: 1rem;
+                padding: 12px 0;
+            }
+            .info-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+            .info-label {
+                min-width: unset;
+                font-size: 1rem;
+            }
+            .info-value {
+                font-size: 1rem;
+            }
+            .exam-enter-btn {
+                font-size: 0.9rem;
+                padding: 4px 8px;
+                right: 8px;
+            }
+        }
+    </style>
+    <script src="../js/script.js"></script>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Thông tin giáo viên</h2>
+        <br>
+        <div class="info-group">
+            <span class="info-label">Họ tên:</span>
+            <span class="info-value" id="teacherName"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Ngày sinh:</span>
+            <span class="info-value" id="teacherBirthday"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Giới tính:</span>
+            <span class="info-value" id="teacherGender"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Email:</span>
+            <span class="info-value" id="teacherEmail"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Số điện thoại:</span>
+            <span class="info-value" id="teacherPhone"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Trường:</span>
+            <span class="info-value" id="teacherSchool"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Cấp học:</span>
+            <span class="info-value" id="teacherLevel"></span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Môn dạy:</span>
+            <span class="info-value" id="teacherSubject"></span>
+        </div>
+        <div class="exam-list">
+            <div class="exam-list-title">Danh sách đề thi đã tạo</div>
+            <div id="examList"></div>
+        </div>
+        <button class="create-btn" onclick="window.location.href='create.html'">Tạo đề thi mới</button>
+    </div>
+    <script>
+        // Lấy thông tin giáo viên từ localStorage
+        const user = JSON.parse(localStorage.getItem('user')) || {};
+        document.getElementById('teacherName').textContent = user.name || '';
+        document.getElementById('teacherBirthday').textContent = formatBirthday(user.birthday);
+        document.getElementById('teacherGender').textContent = user.gender || '';
+        document.getElementById('teacherEmail').textContent = user.email || '';
+        document.getElementById('teacherPhone').textContent = user.phone || '';
+        document.getElementById('teacherSchool').textContent = user.school || '';
+        
+        if (user.schoolLevel == 'primary') {
+            document.getElementById('teacherLevel').textContent = 'Tiểu học';
+        } else if (user.schoolLevel == 'secondary') {
+            document.getElementById('teacherLevel').textContent = 'Trung học cơ sở';
+        } else if (user.schoolLevel == 'high') {
+            document.getElementById('teacherLevel').textContent = 'Trung học phổ thông';
+        } else {
+            document.getElementById('teacherLevel').textContent = 'Chưa xác định';
+        }
+        
+        subjects.forEach(sub => {
+            if (sub.value === user.subject) {
+                document.getElementById('teacherSubject').textContent = sub.text || '';
+            }
+        });
+
+        // Lấy danh sách đề thi đã tạo từ localStorage hoặc API
+        async function fetchExams() {
+            let exams = JSON.parse(user.listExam) || [];
+            console.log(exams);
+            const examListDiv = document.getElementById('examList');
+            examListDiv.innerHTML = '';
+            if (!exams.length) {
+                document.write('<div style="color:#888;">Chưa có đề thi nào.</div>');
+            } else {
+                let html = '';
+                exams.forEach(exam => {
+                    html += `<div class='exam-item'>`;
+                    html += (`
+                        <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
+                        <div class='exam-meta'>Môn:<b> ${exam.subject || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
+                        <button class='exam-enter-btn' onclick="window.location.href='load.html?id=${exam.id}'">Vào đề</button>`);
+                    html += `</div>`;
+                });
+                examListDiv.innerHTML = html;
+            }
+        }
+        fetchExams();
+
+        function formatBirthday(birthday) {
+            if (!birthday) return '';
+            // Nếu đã đúng định dạng dd/mm/yyyy thì trả về luôn
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthday)) return birthday;
+            // Nếu là yyyy-mm-dd thì chuyển sang dd/mm/yyyy
+            if (/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
+                const [y, m, d] = birthday.split('-');
+                return `${d}/${m}/${y}`;
+            }
+            // Nếu là dạng khác thì cố gắng parse
+            try {
+                const d = new Date(birthday);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch {
+                return birthday;
+            }
+        }
+    </script>
+</body>
+</html>
