@@ -345,7 +345,9 @@
                         const questionss = await response.json();
                         let newQuestions = generatedOptions(questionss);
                         let generatedQuestions = generateExamFromQuestions(newQuestions, total, easy, medium, hard);
-                        localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+                        localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
+                        localStorage.setItem('isNewExam', 1);
+
                         return generatedQuestions;
                     } catch (error) {
                         console.error("❌ Lỗi khi gọi getAllQuestions():", error);
@@ -387,6 +389,7 @@
             menu.classList.remove('hidden');
         });
         function backToLogin() {
+            localStorage.setItem('isLoggedIn', 0);
             window.location.href = 'login.html';
         }
         document.addEventListener('click', function(e) {

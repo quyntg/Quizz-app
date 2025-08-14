@@ -101,9 +101,22 @@
             cursor: pointer;
             box-shadow: 0 1px 4px rgba(44,123,229,0.08);
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .exam-enter-btn:hover {
-            background: #1a5fb4;
+        .modern-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #2c7be5;
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: modern-spin 0.8s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes modern-spin {
+            100% { transform: rotate(360deg); }
         }
         @media (max-width: 600px) {
             .form-container {
@@ -181,6 +194,7 @@
         <button class="create-btn" onclick="window.location.href='create.html'">Tạo đề thi mới</button>
     </div>
     <script>
+        getTeacherById();  
         // Lấy thông tin giáo viên từ localStorage
         const user = JSON.parse(localStorage.getItem('user')) || {};
         document.getElementById('teacherName').textContent = user.name || '';
@@ -209,19 +223,28 @@
         // Lấy danh sách đề thi đã tạo từ localStorage hoặc API
         async function fetchExams() {
             let exams = JSON.parse(user.listExam) || [];
-            console.log(exams);
             const examListDiv = document.getElementById('examList');
             examListDiv.innerHTML = '';
             if (!exams.length) {
-                document.write('<div style="color:#888;">Chưa có đề thi nào.</div>');
+                examListDiv.innerHTML = `<div class='exam-item' style="color:#888;">Chưa có đề thi nào.</div>`;
             } else {
                 let html = '';
-                exams.forEach(exam => {
+                let subjectName = '';
+                exams.forEach(exam => {                    
+                    subjects.forEach(sub => {
+                        if (sub.value === exam.subject) {
+                            subjectName = sub.text || '';
+                        }
+                    });
+
                     html += `<div class='exam-item'>`;
                     html += (`
                         <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
-                        <div class='exam-meta'>Môn:<b> ${exam.subject || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
-                        <button class='exam-enter-btn' onclick="window.location.href='load.html?id=${exam.id}'">Vào đề</button>`);
+                        <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
+                        <button class='exam-enter-btn' onclick="enterExam(this, &quot;${exam.subject || ''}&quot;, &quot;${exam.id || ''}&quot;)">
+                            <span class='modern-spinner' style='display:none'></span>
+                            Vào đề
+                        </button>`);
                     html += `</div>`;
                 });
                 examListDiv.innerHTML = html;
@@ -248,6 +271,44 @@
             } catch {
                 return birthday;
             }
+        }
+
+        function enterExam(btn, subject, id) {
+            btn.disabled = true;
+            const spinner = btn.querySelector('.modern-spinner');
+            spinner.style.display = 'inline-block';
+
+            // Sử dụng GET thay vì POST
+            const url = `${ggApiUrl}?action=getExamById&id=${encodeURIComponent(id)}&subject=${encodeURIComponent(subject)}`;
+            fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data) {
+                    localStorage.setItem('examName', data.name || '');
+                    localStorage.setItem('examTime', data.time || '');
+                    localStorage.setItem('easyCount', data.easy || 0);
+                    localStorage.setItem('mediumCount', data.medium || 0);
+                    localStorage.setItem('hardCount', data.hard || 0);
+                    localStorage.setItem('grade', data.grade || '');
+                    localStorage.setItem('school', data.school || '');
+                    localStorage.setItem('subject', data.subject || '');
+                    localStorage.setItem('totalQuestions', data.total || 0);
+
+                    let newQuestions = generatedOptions(data.list || []);
+                    let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
+                    localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+                    localStorage.setItem('isNewExam', 0);
+                } else {
+                    console.log('Không thành công!');
+                }
+            })
+            .catch(() => {
+                // Xử lý lỗi nếu cần
+            })
+            .finally(() => {
+                spinner.style.display = 'none';
+                window.location.href = 'load.html?id=' + id;
+            });
         }
     </script>
 </body>

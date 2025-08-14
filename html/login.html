@@ -249,6 +249,8 @@
                             errorEl.classList.add("hidden");
                             document.getElementById('successMessage').textContent = data.message || "Bạn đã đăng nhập thành công!";
                             document.getElementById('successModal').style.display = 'flex';
+                            localStorage.setItem('isLoggedIn', 1);
+                            localStorage.setItem('isChange', 0);
                         } else {
                             errorEl.textContent = data.message || "Sai thông tin đăng nhập.";
                             errorEl.classList.remove("hidden");

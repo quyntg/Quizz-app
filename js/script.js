@@ -144,7 +144,8 @@ function readFile(file) {
 			const hard = parseInt(localStorage.getItem('hardCount')) || 0;
 			
 			let generatedQuestions = generateExamFromQuestions(allQuestions, total, easy, medium, hard);
-			localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+			localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
+            localStorage.setItem('isNewExam', 1);
 		}
 	};
 
@@ -461,4 +462,23 @@ function generatedOptions(question) {
 	}
 
 	return newQuestion;
+}
+
+function getTeacherById() {
+	let id = JSON.parse(localStorage.getItem('user')).id || 0;
+
+	const url = ggApiUrl + `?action=getTeacherById&id=${encodeURIComponent(id)}`;
+	fetch(url)
+	.then((res) => {
+		if (!res.ok) {
+			throw new Error(`HTTP error! status: ${res.status}`);
+		}
+		return res.json();
+	})
+	.then((data) => {
+		console.log("✅ Lấy thông tin giáo viên thành công:", data);
+	})
+	.catch((err) => {
+		console.error("❌ Lỗi khi gọi API:", err);
+	});
 }
