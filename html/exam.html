@@ -30,7 +30,7 @@
             <main class="content">
                 <header class="content-header">
                     <h2>Câu hỏi <span id="currentIndex">1</span>/<span id="totalLength"></span></h2>
-        	        <button onclick="newExam()">Tạo đề mới</button>
+        	        <button id="btnNewExam" onclick="newExam()" style="display:none;">Tạo đề mới</button>
                     <div id="countdownTimer" style="font-weight: bold; font-size: 18px; color: red;">
                         Thời gian: <span id="timerDisplay">--:--</span>
                     </div>
@@ -44,6 +44,7 @@
             </main>
         </div>
     </body>
+</p>
     <div id="resultModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-btn" onclick="closeResultModal()">&times;</span>
@@ -51,11 +52,46 @@
             <div id="resultBody" style="line-height: 25px;"></div>
         </div>
     </div>
+    <div id="confirmModal" class="modal hidden">
+    <div id="timeoutModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>⏰ Hết thời gian làm bài!</h2>
+            <p>Bạn đã hết thời gian làm bài. Bài thi sẽ được nộp tự động.</p>
+            <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <button id="timeoutOk" class="btn-primary">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeConfirmModal()">&times;</span>
+            <h2>Xác nhận nộp bài</h2>
+            <p>Bạn có chắc chắn muốn nộp bài không?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button id="confirmYes" class="btn-primary">Nộp bài</button>
+                <button id="confirmNo" class="btn-secondary">Hủy</button>
+            </div>
+        </div>
+    </div>
 </html>
 <script>
     generatedQuestions = JSON.parse(localStorage.getItem('questions'));
     totalQuestions = generatedQuestions.length;
     totalPages = Math.ceil(totalQuestions / pageSize);
+
+    function isPageReload() {
+        const navEntries = performance.getEntriesByType("navigation");
+        if (navEntries.length > 0) {
+            return navEntries[0].type === "reload";
+        }
+        return performance.navigation.type === performance.navigation.TYPE_RELOAD;
+    }
+
+    if (isPageReload()) {
+        isSubmitted = true;
+        document.getElementById('submitQuiz').disabled = true;
+        document.getElementById('submitQuiz').disabled = true;
+        submitExam(0)
+    }
 
     window.onload = () => {
         initNav(); // Hiển thị trước nav
@@ -67,4 +103,19 @@
             updateAnsweredNav();
         }
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (isSubmitted) {
+            timerDuration = 0;
+        } else {
+            timerDuration = parseInt(localStorage.getItem('examTime')) * 60;
+        }
+        const examId = localStorage.getItem('examId');
+        const btnNewExam = document.getElementById('btnNewExam');
+        if (!examId) {
+            btnNewExam.style.display = 'inline-block';
+        } else {
+            btnNewExam.style.display = 'none';
+        }
+    });
 </script>

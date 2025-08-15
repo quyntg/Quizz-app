@@ -28,12 +28,12 @@
             right: 32px;
             z-index: 1000;
             font-size: 16px;
-            color: var(--primary);
+            color: #2c7be5;
             font-weight: 500;
-            background: var(--white);
+            background: #fff;
             padding: 8px 18px;
             border-radius: 24px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             cursor: pointer;
             transition: box-shadow 0.2s;
         }
@@ -44,10 +44,10 @@
             position: absolute;
             top: 100%;
             right: 0;
-            background: var(--white);
+            background: #fff;
             border: 1px solid #dfe6e9;
             border-radius: 6px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             min-width: 120px;
             z-index: 10;
             margin: 5px;
@@ -56,10 +56,14 @@
             width: 100%;
             background: none;
             border: none;
-            color: var(--danger);
+            color: #d63031;
             font-size: 16px;
             padding: 10px 0;
             cursor: pointer;
+            border-radius: 0 0 6px 6px;
+        }
+        .greeting-menu.hidden {
+            display: none;
         }
         .hidden { display: none; }
 
@@ -140,28 +144,11 @@
                 margin: 0;
                 border-radius: 0;
                 box-shadow: none;
-                padding: 18px 8px 12px 8px;
+                padding: 30px 8px 12px 8px;
             }
             h2 {
                 font-size: 1.3rem;
                 margin-top: 32px;
-            }
-            .user-greeting {
-                position: static;
-                display: block;
-                width: 100%;
-                margin: 0 auto 8px auto;
-                font-size: 14px;
-                padding: 6px 12px;
-                box-shadow: none;
-                border-radius: 8px;
-                text-align: center;
-            }
-            .greeting-menu {
-                min-width: 80px;
-                font-size: 14px;
-                left: 50%;
-                transform: translateX(-50%);
             }
             button {
                 font-size: 1rem;
@@ -175,7 +162,7 @@
     <script src="../js/script.js"></script>
 </head>
 <body>
-    <div id="user-greeting" class="user-greeting">
+    <div id="user-greeting" class="user-greeting" style="display:none;">
         <div id="greetingText"></div>
         <div id="greetingMenu" class="greeting-menu hidden">
             <button onclick="backToLogin()">Thoát</button>
@@ -346,7 +333,8 @@
                         let newQuestions = generatedOptions(questionss);
                         let generatedQuestions = generateExamFromQuestions(newQuestions, total, easy, medium, hard);
                         localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
-                        localStorage.setItem('isNewExam', 1);
+                        localStorage.setItem('isNewExam', 1);                        
+                        localStorage.setItem('examId', '');
 
                         return generatedQuestions;
                     } catch (error) {
@@ -377,27 +365,35 @@
             }
         }
 
-        // Hiển thị chào + tên tài khoản ở góc phải trên
-        const teacherName = localStorage.getItem('teacherName') || '';
-        const grade = localStorage.getItem('grade') || '';
-        if (teacherName) {
-            document.getElementById('greetingText').innerHTML = `👋 Chào, <b>${teacherName}</b>`;
+        // Hiển thị chào + tên tài khoản ở góc phải trên giống info.html
+        function showGreeting() {
+            const user = JSON.parse(localStorage.getItem('user')) || {};
+            const teacherName = user.name || localStorage.getItem('teacherName') || '';
+            if (teacherName) {
+                document.getElementById('greetingText').innerHTML = `👋 Chào, <b>${teacherName}</b>`;
+                document.getElementById('user-greeting').style.display = 'block';
+            } else {
+                document.getElementById('user-greeting').style.display = 'none';
+            }
         }
-        document.getElementById('user-greeting').addEventListener('click', function(e) {
-            e.stopPropagation();
-            const menu = document.getElementById('greetingMenu');
-            menu.classList.remove('hidden');
+        document.addEventListener('DOMContentLoaded', function() {
+            showGreeting();
+            document.getElementById('user-greeting').addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = document.getElementById('greetingMenu');
+                menu.classList.remove('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                const menu = document.getElementById('greetingMenu');
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                }
+            });
         });
         function backToLogin() {
             localStorage.setItem('isLoggedIn', 0);
             window.location.href = 'login.html';
         }
-        document.addEventListener('click', function(e) {
-            const menu = document.getElementById('greetingMenu');
-            if (!menu.classList.contains('hidden')) {
-                menu.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>

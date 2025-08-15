@@ -7,6 +7,49 @@
     <link rel="stylesheet" href="../css/style.css">
     <script src="../data/data.js"></script>
     <style>
+        .user-greeting {
+            position: fixed;
+            top: 18px;
+            right: 32px;
+            z-index: 1000;
+            font-size: 16px;
+            color: #2c7be5;
+            font-weight: 500;
+            background: #fff;
+            padding: 8px 18px;
+            border-radius: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .user-greeting:hover {
+            box-shadow: 0 4px 16px rgba(44,123,229,0.18);
+        }
+        .greeting-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1px solid #dfe6e9;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            min-width: 120px;
+            z-index: 10;
+            margin: 5px;
+        }
+        .greeting-menu button {
+            width: 100%;
+            background: none;
+            border: none;
+            color: #d63031;
+            font-size: 16px;
+            padding: 10px 0;
+            cursor: pointer;
+            border-radius: 0 0 6px 6px;
+        }
+        .greeting-menu.hidden {
+            display: none;
+        }
         body {
             background: #f5f7fa;
             padding: 20px;
@@ -50,24 +93,44 @@
         .exam-item {
             background: #e3e3e3;
             border-radius: 8px;
-            padding: 12px 32px 12px 16px; /* tăng padding phải để đủ chỗ cho nút */
+            padding: 12px 16px;
             margin-bottom: 10px;
             box-shadow: 0 1px 4px rgba(44,123,229,0.06);
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex-direction: row;
+            gap: 16px;
             position: relative;
             overflow: hidden;
+            align-items: center;
         }
         .exam-title {
             font-weight: 500;
             color: #222;
         }
         .exam-meta {
-            font-size: 0.95rem;
-            color: #666;
-            padding-right: 50px; /* đủ chỗ cho nút bên phải */
+            width: 100%;
             word-break: break-word;
+        }
+        .exam-btn-group-side {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            min-width: 140px;
+            width: 20%;
+            gap: 14px;
+            padding-right: 4px;
+            position: static;
+        }
+        .exam-link-btn:hover {
+            background: #1a5fb4;
+            color: #fff;
+        }
+        .exam-link-btn:disabled, .exam-enter-btn:disabled {
+            background: #f1f2f6;
+            color: #b2bec3;
+            border: 1px solid #dfe6e9;
+            cursor: not-allowed;
         }
         .create-btn {
             display: block;
@@ -89,10 +152,8 @@
         }
         .exam-enter-btn {
             position: absolute;
-            top: 50%;
-            right: 12px;
             transform: translateY(-50%);
-            padding: 4px 10px;
+            padding: 5px 10px;
             font-size: 0.95rem;
             border-radius: 6px;
             background: #2c7be5;
@@ -105,6 +166,33 @@
             align-items: center;
             gap: 6px;
         }
+        .exam-link-btn {
+            position: relative;
+            padding: 5px 10px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(44,123,229,0.08);
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 0;
+            margin-top: 40px;
+        }
+        .exam-link-btn:hover {
+            background: #2c7be5;
+            color: #fff;
+        }
+        .exam-link-btn:disabled {
+            background: #f1f2f6;
+            color: #b2bec3;
+            border: 1px solid #dfe6e9;
+            cursor: not-allowed;
+        }
         .modern-spinner {
             display: inline-block;
             width: 18px;
@@ -115,6 +203,28 @@
             animation: modern-spin 0.8s linear infinite;
             vertical-align: middle;
         }
+        #pagination button {
+            background: #fff;
+            color: #2c7be5;
+            border: 1px solid #2c7be5;
+            border-radius: 6px;
+            margin: 0 5px;
+            padding: 6px 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        #pagination button[disabled] {
+            background: #f1f2f6;
+            color: #b2bec3;
+            border: 1px solid #dfe6e9;
+            cursor: not-allowed;
+        }
+        #pagination button.active, #pagination button[style*="background:#2c7be5"] {
+            background: #2c7be5 !important;
+            color: #fff !important;
+            border: 1px solid #2c7be5;
+        }
         @keyframes modern-spin {
             100% { transform: rotate(360deg); }
         }
@@ -124,7 +234,7 @@
                 margin: 0;
                 border-radius: 0;
                 box-shadow: none;
-                padding: 18px 8px 12px 8px;
+                padding: 40px 8px 12px 8px;
             }
             .create-btn {
                 font-size: 1rem;
@@ -142,16 +252,110 @@
             .info-value {
                 font-size: 1rem;
             }
-            .exam-enter-btn {
-                font-size: 0.9rem;
-                padding: 4px 8px;
-                right: 8px;
+            .exam-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px 8px;
             }
+            .exam-btn-group-side {
+                width: 100%;
+                align-items: center;
+                flex-direction: row;
+                gap: 4%;
+                padding-right: 0;
+                position: static;
+                margin-top: 10px;
+                justify-content: center;
+                flex-wrap: nowrap; /* Ép nằm ngang */
+            }
+            .exam-enter-btn, .exam-link-btn {
+                flex: 1;                /* Chia đều không gian */
+                width: auto;            /* Bỏ width % cố định */
+                padding: 10px 0;
+                font-size: 1rem;
+                margin: 0;
+                border-radius: 8px;
+                margin-top: 0;
+                position: static;       /* bỏ absolute */
+                transform: none;        /* bỏ translate */
+            }
+        }
+        .modal-overlay {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal-box {
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+        .modal-content {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 24px;
+        }
+        .close-button {
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .close-button:hover {
+            background: #1a5fb4;
+        }
+        .exam-btn-group {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .exam-enter-btn, .exam-link-btn {
+            min-width: 120px;
+            justify-content: center; 
         }
     </style>
     <script src="../js/script.js"></script>
 </head>
 <body>
+    <div id="user-greeting" class="user-greeting" style="display:none;">
+        <div id="greetingText"></div>
+        <div id="greetingMenu" class="greeting-menu hidden">
+            <button onclick="backToLogin()">Thoát</button>
+        </div>
+    </div>
+    <div id="loadingModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(44,123,229,0.18);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 38px;border-radius:12px;box-shadow:0 2px 12px rgba(44,123,229,0.18);font-size:1.15rem;color:#2c7be5;display:flex;align-items:center;gap:16px;">
+            <span class="modern-spinner" style="display:inline-block;"></span>
+            <span>Đang tải thông tin giáo viên...</span>
+        </div>
+    </div>
     <div class="form-container">
         <h2>Thông tin giáo viên</h2>
         <br>
@@ -190,67 +394,163 @@
         <div class="exam-list">
             <div class="exam-list-title">Danh sách đề thi đã tạo</div>
             <div id="examList"></div>
+            <div id="pagination" style="display:none; margin: 16px 0; text-align:center;"></div>
         </div>
         <button class="create-btn" onclick="window.location.href='create.html'">Tạo đề thi mới</button>
     </div>
+    <div class="modal-overlay" id="copyLinkModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-title">Sao chép link đề thi</div>
+            <div class="modal-content" id="copyLinkContent"></div>
+            <button class="close-button" onclick="closeCopyLinkModal()">OK</button>
+        </div>
+    </div>
     <script>
-        getTeacherById();  
-        // Lấy thông tin giáo viên từ localStorage
-        const user = JSON.parse(localStorage.getItem('user')) || {};
-        document.getElementById('teacherName').textContent = user.name || '';
-        document.getElementById('teacherBirthday').textContent = formatBirthday(user.birthday);
-        document.getElementById('teacherGender').textContent = user.gender || '';
-        document.getElementById('teacherEmail').textContent = user.email || '';
-        document.getElementById('teacherPhone').textContent = user.phone || '';
-        document.getElementById('teacherSchool').textContent = user.school || '';
-        
-        if (user.schoolLevel == 'primary') {
-            document.getElementById('teacherLevel').textContent = 'Tiểu học';
-        } else if (user.schoolLevel == 'secondary') {
-            document.getElementById('teacherLevel').textContent = 'Trung học cơ sở';
-        } else if (user.schoolLevel == 'high') {
-            document.getElementById('teacherLevel').textContent = 'Trung học phổ thông';
-        } else {
-            document.getElementById('teacherLevel').textContent = 'Chưa xác định';
-        }
-        
-        subjects.forEach(sub => {
-            if (sub.value === user.subject) {
-                document.getElementById('teacherSubject').textContent = sub.text || '';
-            }
-        });
-
-        // Lấy danh sách đề thi đã tạo từ localStorage hoặc API
-        async function fetchExams() {
-            let exams = JSON.parse(user.listExam) || [];
-            const examListDiv = document.getElementById('examList');
-            examListDiv.innerHTML = '';
-            if (!exams.length) {
-                examListDiv.innerHTML = `<div class='exam-item' style="color:#888;">Chưa có đề thi nào.</div>`;
+        // Hiển thị chào + tên tài khoản ở góc phải trên
+        function showGreeting() {
+            const user = JSON.parse(localStorage.getItem('user')) || {};
+            const teacherName = user.name || localStorage.getItem('teacherName') || '';
+            if (teacherName) {
+                document.getElementById('greetingText').innerHTML = `👋 Chào, <b>${teacherName}</b>`;
+                document.getElementById('user-greeting').style.display = 'block';
             } else {
-                let html = '';
-                let subjectName = '';
-                exams.forEach(exam => {                    
-                    subjects.forEach(sub => {
-                        if (sub.value === exam.subject) {
-                            subjectName = sub.text || '';
-                        }
-                    });
-
-                    html += `<div class='exam-item'>`;
-                    html += (`
-                        <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
-                        <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
-                        <button class='exam-enter-btn' onclick="enterExam(this, &quot;${exam.subject || ''}&quot;, &quot;${exam.id || ''}&quot;)">
-                            <span class='modern-spinner' style='display:none'></span>
-                            Vào đề
-                        </button>`);
-                    html += `</div>`;
-                });
-                examListDiv.innerHTML = html;
+                document.getElementById('user-greeting').style.display = 'none';
             }
         }
-        fetchExams();
+        document.addEventListener('DOMContentLoaded', function() {
+            showGreeting();
+            document.getElementById('user-greeting').addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = document.getElementById('greetingMenu');
+                menu.classList.remove('hidden');
+            });
+            document.addEventListener('click', function(e) {
+                const menu = document.getElementById('greetingMenu');
+                if (!menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+        function backToLogin() {
+            localStorage.setItem('isLoggedIn', 0);
+            window.location.href = 'login.html';
+        }
+
+        // Đảm bảo getTeacherById chạy xong mới thực thi các script khác
+        async function runAfterGetTeacher() {
+            // Luôn gọi await getTeacherById() để đảm bảo chạy async
+            // Hiện modal loading
+            document.getElementById('loadingModal').style.display = 'flex';
+            if (typeof getTeacherById === 'function') {
+                await getTeacherById();
+                console.log('✅ Đã lấy thông tin giáo viên thành công');
+            }
+            // Ẩn modal loading
+            document.getElementById('loadingModal').style.display = 'none';
+            // Lấy thông tin giáo viên từ localStorage
+            const user = JSON.parse(localStorage.getItem('user')) || {};
+            document.getElementById('teacherName').textContent = user.name || '';
+            document.getElementById('teacherBirthday').textContent = formatBirthday(user.birthday);
+            document.getElementById('teacherGender').textContent = user.gender || '';
+            document.getElementById('teacherEmail').textContent = user.email || '';
+            document.getElementById('teacherPhone').textContent = user.phone || '';
+            document.getElementById('teacherSchool').textContent = user.school || '';
+
+            if (user.schoolLevel == 'primary') {
+                document.getElementById('teacherLevel').textContent = 'Tiểu học';
+            } else if (user.schoolLevel == 'secondary') {
+                document.getElementById('teacherLevel').textContent = 'Trung học cơ sở';
+            } else if (user.schoolLevel == 'high') {
+                document.getElementById('teacherLevel').textContent = 'Trung học phổ thông';
+            } else {
+                document.getElementById('teacherLevel').textContent = 'Chưa xác định';
+            }
+
+            subjects.forEach(sub => {
+                if (sub.value === user.subject) {
+                    document.getElementById('teacherSubject').textContent = sub.text || '';
+                }
+            });
+
+            // Lấy danh sách đề thi đã tạo từ localStorage hoặc API
+            async function fetchExams() {
+                let exams = JSON.parse(user.listExam) || [];
+                const examListDiv = document.getElementById('examList');
+                const paginationDiv = document.getElementById('pagination');
+                examListDiv.innerHTML = '';
+                paginationDiv.innerHTML = '';
+                const pageSize = 5;
+                let currentPage = 1;
+                let totalPages = Math.ceil(exams.length / pageSize);
+
+                function renderPage(page) {
+                    examListDiv.innerHTML = '';
+                    let subjectName = '';
+                    const startIdx = (page - 1) * pageSize;
+                    const endIdx = Math.min(startIdx + pageSize, exams.length);
+                    for (let i = startIdx; i < endIdx; i++) {
+                        const exam = exams[i];
+                        subjectName = '';
+                        subjects.forEach(sub => {
+                            if (sub.value === exam.subject) {
+                                subjectName = sub.text || '';
+                            }
+                        });
+                        examListDiv.innerHTML += `
+                            <div class='exam-item exam-flex'>
+                                <div style='flex:1;'>
+                                    <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
+                                    <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
+                                </div>
+                                <div class='exam-btn-group-side'>
+                                    <button class='exam-enter-btn' onclick="enterExam(this, '${exam.subject || ''}', '${exam.id || ''}')">
+                                        <span class='modern-spinner' style='display:none'></span>
+                                        Xem đề
+                                    </button>
+                                    <button class='exam-link-btn' onclick="getExamLink(this, '${exam.id || ''}', '${exam.subject || ''}')">
+                                        <span class='modern-spinner' style='display:none'></span>
+                                        Link đề
+                                    </button>
+                                </div>
+                            </div>`;
+                    }
+                }
+
+                function renderPagination() {
+                    if (exams.length < 6) {
+                        paginationDiv.style.display = 'none';
+                        return;
+                    }
+                    paginationDiv.style.display = 'block';
+                    let html = '';
+                    html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick='changePage(${currentPage - 1})'>Trước</button>`;
+                    for (let i = 1; i <= totalPages; i++) {
+                        html += `<button ${i === currentPage ? 'style="background:#2c7be5;color:#fff;"' : ''} onclick='changePage(${i})'>${i}</button>`;
+                    }
+                    html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick='changePage(${currentPage + 1})'>Sau</button>`;
+                    paginationDiv.innerHTML = html;
+                }
+
+                window.changePage = function(page) {
+                    if (page < 1 || page > totalPages) return;
+                    currentPage = page;
+                    renderPage(currentPage);
+                    renderPagination();
+                };
+
+                if (!exams.length) {
+                    examListDiv.innerHTML = `<div class='exam-item' style="color:#888;">Chưa có đề thi nào.</div>`;
+                    paginationDiv.style.display = 'none';
+                } else {
+                    renderPage(currentPage);
+                    renderPagination();
+                }
+            }
+            fetchExams();
+        }
+        window.onload = function() {
+            runAfterGetTeacher();
+        };
 
         function formatBirthday(birthday) {
             if (!birthday) return '';
@@ -292,12 +592,13 @@
                     localStorage.setItem('grade', data.grade || '');
                     localStorage.setItem('school', data.school || '');
                     localStorage.setItem('subject', data.subject || '');
-                    localStorage.setItem('totalQuestions', data.total || 0);
+                    localStorage.setItem('totalQuestions', data.total || 0);                  
+                    localStorage.setItem('examId', data.id);
 
                     let newQuestions = generatedOptions(data.list || []);
                     let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
                     localStorage.setItem('questions', JSON.stringify(generatedQuestions));
-                    localStorage.setItem('isNewExam', 0);
+                    localStorage.setItem('isNewExam', 0);     
                 } else {
                     console.log('Không thành công!');
                 }
@@ -309,6 +610,28 @@
                 spinner.style.display = 'none';
                 window.location.href = 'load.html?id=' + id;
             });
+        }
+
+        function getExamLink(btn, examId, subject) {
+            btn.disabled = true;
+            const spinner = btn.querySelector('.modern-spinner');
+            spinner.style.display = 'inline-block';
+            const link = window.location.origin + '/html/student.html?id=' + examId + '&subject=' + subject;
+            navigator.clipboard.writeText(link).then(() => {
+                showCopyLinkModal('Đã copy link đề thi:<br><span style="word-break:break-all;color:#2c7be5;font-weight:500;">' + link + '</span>');
+            }, () => {
+                showCopyLinkModal('Không thể copy link. Link:<br><span style="word-break:break-all;color:#d63031;font-weight:500;">' + link + '</span>');
+            }).finally(() => {
+                spinner.style.display = 'none';
+                btn.disabled = false;
+            });
+        }
+        function showCopyLinkModal(content) {
+            document.getElementById('copyLinkContent').innerHTML = content;
+            document.getElementById('copyLinkModal').style.display = 'flex';
+        }
+        function closeCopyLinkModal() {
+            document.getElementById('copyLinkModal').style.display = 'none';
         }
     </script>
 </body>

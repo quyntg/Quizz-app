@@ -4,7 +4,7 @@ let currentPage = 0;
 let generatedQuestions = [];
 let totalQuestions = 0;
 let totalPages = 0;
-let timerDuration = 30 * 60; // 30 phút = 1800 giây
+let timerDuration = 0; // 30 phút = 1800 giây
 let timerInterval;
 let isSubmitted = false;
 let totalTimeSpent = 0; // giây
@@ -26,7 +26,11 @@ function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, 
         alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
         return;
     } else {        
-        window.location.href = 'load.html';
+		if (localStorage.getItem('isStudent') == '1') {
+			
+		} else {
+        	window.location.href = 'load.html';
+		}
     }
 
     function pickRandom(arr, n) {
@@ -145,7 +149,8 @@ function readFile(file) {
 			
 			let generatedQuestions = generateExamFromQuestions(allQuestions, total, easy, medium, hard);
 			localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
-            localStorage.setItem('isNewExam', 1);
+            localStorage.setItem('isNewExam', 1);                    
+            localStorage.setItem('examId', '');
 		}
 	};
 
@@ -156,24 +161,37 @@ function startCountdown(seconds = timerDuration) {
 	timerStartAt = Date.now(); // Ghi lại thời điểm bắt đầu
 	let timeLeft = seconds;
 	updateTimerDisplay(timeLeft);
-	
+    
 	timerInterval = setInterval(() => {
 		timeLeft--;
 		updateTimerDisplay(timeLeft);
 
 		if (timeLeft <= 0) {
 			clearInterval(timerInterval);
-			alert("⏰ Hết thời gian làm bài!");
-			submitExam(); // Tự động nộp bài
+			showTimeoutModal();
 		}
 	}, 1000);
 }
 
+function showTimeoutModal() {
+	const modal = document.getElementById('timeoutModal');
+	modal.classList.remove('hidden');
+	document.getElementById('timeoutOk').onclick = function() {
+		modal.classList.add('hidden');
+		submitExam(1);
+	};
+}
+
 function updateTimerDisplay(seconds) {
-	const mins = Math.floor(seconds / 60);
-	const secs = seconds % 60;
-	document.getElementById("timerDisplay").innerText =
-		`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	let display;
+	if (seconds < 0) {
+		display = "00:00";
+	} else {
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		display = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	}
+	document.getElementById("timerDisplay").innerText = display;
 }
 
 // Tạo nav 40 ô câu hỏi
@@ -290,7 +308,7 @@ function loadQuestions() {
 	// Kiểm tra trạng thái đã nộp bài
 	isSubmitted = JSON.parse(localStorage.getItem('isSubmitted')) || false;
 	generatedQuestions = JSON.parse(localStorage.getItem('questions')) || [];
-	totalTimeSpent = parseInt(localStorage.getItem('totalTimeSpent')) || 0;
+	totalTimeSpent = parseInt(localStorage.getItem('examTime')) * 60 || 0;
 
 	// Nếu đã nộp bài, hiển thị lại bài thi cũ
 	if (isSubmitted) {
@@ -356,15 +374,71 @@ function updateAnsweredNav() {
 }
 
 function confirmSubmit() {
-	const confirmed = confirm("Bạn có chắc chắn muốn nộp bài không?");
-	if (confirmed) {
-		submitExam(); // Nếu đồng ý thì mới nộp bài
-	}
+	// Hiển thị modal xác nhận nộp bài
+	const modal = document.getElementById('confirmModal');
+	modal.classList.remove('hidden');
+	// Xử lý nút
+	document.getElementById('confirmYes').onclick = function() {
+		modal.classList.add('hidden');
+		submitExam(1);
+	};
+	document.getElementById('confirmNo').onclick = function() {
+		modal.classList.add('hidden');
+	};
 }
 
-function submitExam() {
-	if (isSubmitted) return; // Không nộp lại
+function closeConfirmModal() {
+	document.getElementById('confirmModal').classList.add('hidden');
+}
 
+function submitExam(type) {
+    const examId = localStorage.getItem('examId') || '';
+	let studentInfo = JSON.parse(localStorage.getItem('studentInfo')) || {};
+    const studentName = studentInfo.name || '';
+    const studentCode = studentInfo.code || '';
+    const studentSchool = studentInfo.school || '';
+    const studentClass = studentInfo.class || '';
+    const note = '';
+	if (type == 0) {
+		// Gán userAnswer là đáp án đúng cho tất cả câu hỏi
+		generatedQuestions.forEach((q) => {
+			const correctIndex = parseInt(q.correct) - 1;
+			const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+			q.userAnswer = correctContext;
+		});
+		// Đánh dấu đã nộp để khóa đáp án trên toàn bộ giao diện
+		isSubmitted = true;
+		localStorage.setItem('isSubmitted', true);
+		// Hiển thị lại giao diện cho trang hiện tại
+		renderPage();
+		showQuestion(current);
+		// Hiển thị modal kết quả đơn giản như resultText mẫu
+		const resultText = `
+			✅ Đúng: 0<br>
+			❌ Sai: 0<br>
+			⚠️ Chưa làm: ${totalQuestions}<br>
+			⏱️ Thời gian làm bài: 0 phút 0 giây
+		`;
+		document.getElementById('resultBody').innerHTML = resultText;
+		document.getElementById('resultModal').style.display = 'block';
+		// Gửi kết quả lên BE với trạng thái chưa làm
+		const resultData = {
+			examId: examId,
+			studentName: studentName,
+			studentCode: studentCode,
+			studentSchool: studentSchool,
+			studentClass: studentClass,
+			correct: 0,
+			wrong: 0,
+			unAnswer: totalQuestions,
+			spentTime: 0,
+			point: 0,
+			note: note
+		};
+		saveResult(resultData);
+		return;
+	}
+	if (isSubmitted) return; // Không nộp lại
 	isSubmitted = true;
 	localStorage.setItem('isSubmitted', isSubmitted); // Lưu trạng thái đã nộp
 	clearInterval(timerInterval); // Dừng đếm giờ
@@ -426,6 +500,46 @@ function submitExam() {
 	document.getElementById('resultBody').innerHTML = resultText;
 	document.getElementById('resultModal').style.display = 'block';
 	localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+
+	// Đẩy dữ liệu lên BE
+    const point = Math.round((correctCount / totalQuestions) * 10 * 100) / 100; // Điểm = (số câu đúng / tổng câu hỏi) * 10, làm tròn đến 2 chữ số thập phân
+    const spentTime = totalTimeSpent;
+    const resultData = {
+        examId: examId,
+        studentName: studentName,
+        studentCode: studentCode,
+        studentSchool: studentSchool,
+        studentClass: studentClass,
+        correct: correctCount,
+        wrong: wrongCount,
+        unAnswer: unansweredCount,
+        spentTime: spentTime,
+        point: point,
+        note: note
+    };
+    saveResult(resultData);
+}
+
+// Gửi kết quả thi lên backend
+async function saveResult(resultData) {
+    const url = ggApiUrl;
+    const formData = new FormData();
+    formData.append('action', 'submitExam');
+    Object.keys(resultData).forEach(key => {
+        formData.append(key, resultData[key]);
+    });
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        console.log('✅ Đã gửi kết quả lên BE:', data);
+        return data;
+    } catch (err) {
+        console.error('❌ Lỗi gửi kết quả lên BE:', err);
+        return null;
+    }
 }
 
 function closeResultModal() {
@@ -464,21 +578,18 @@ function generatedOptions(question) {
 	return newQuestion;
 }
 
-function getTeacherById() {
+async function getTeacherById() {
 	let id = JSON.parse(localStorage.getItem('user')).id || 0;
-
 	const url = ggApiUrl + `?action=getTeacherById&id=${encodeURIComponent(id)}`;
-	fetch(url)
-	.then((res) => {
+	try {
+		const res = await fetch(url);
 		if (!res.ok) {
 			throw new Error(`HTTP error! status: ${res.status}`);
 		}
-		return res.json();
-	})
-	.then((data) => {
+		const data = await res.json();
 		console.log("✅ Lấy thông tin giáo viên thành công:", data);
-	})
-	.catch((err) => {
+		localStorage.setItem('user', JSON.stringify(data));
+	} catch (err) {
 		console.error("❌ Lỗi khi gọi API:", err);
-	});
+	}
 }
