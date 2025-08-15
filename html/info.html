@@ -104,8 +104,9 @@
             align-items: center;
         }
         .exam-title {
-            font-weight: 500;
-            color: #222;
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c7be5;
         }
         .exam-meta {
             width: 100%;
@@ -114,11 +115,9 @@
         .exam-btn-group-side {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: flex-end;
-            min-width: 140px;
-            width: 20%;
-            gap: 14px;
+            justify-content: flex-start;
+            align-items: stretch;
+            gap: 12px;
             padding-right: 4px;
             position: static;
         }
@@ -131,6 +130,13 @@
             color: #b2bec3;
             border: 1px solid #dfe6e9;
             cursor: not-allowed;
+        }
+        .exam-result-btn:disabled {
+            background: #363636;
+            color: #b2bec3;
+            border: 1px solid #dfe6e9;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
         .create-btn {
             display: block;
@@ -152,7 +158,6 @@
         }
         .exam-enter-btn {
             position: absolute;
-            transform: translateY(-50%);
             padding: 5px 10px;
             font-size: 0.95rem;
             border-radius: 6px;
@@ -179,7 +184,7 @@
             transition: background 0.2s, color 0.2s;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 12px;
             margin-left: 0;
             margin-top: 40px;
         }
@@ -192,6 +197,26 @@
             color: #b2bec3;
             border: 1px solid #dfe6e9;
             cursor: not-allowed;
+        }
+        .exam-result-btn {
+            position: relative;
+            padding: 5px 10px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(44,123,229,0.08);
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: 0;
+        }
+        .exam-result-btn:hover {
+            background: #1a5fb4;
+            color: #fff;
         }
         .modern-spinner {
             display: inline-block;
@@ -267,18 +292,19 @@
                 position: static;
                 margin-top: 10px;
                 justify-content: center;
-                flex-wrap: nowrap; /* Ép nằm ngang */
+                flex-wrap: nowrap;
             }
-            .exam-enter-btn, .exam-link-btn {
-                flex: 1;                /* Chia đều không gian */
-                width: auto;            /* Bỏ width % cố định */
+            .exam-enter-btn, .exam-link-btn, .exam-result-btn {
+                flex: 1;
+                width: auto;
                 padding: 10px 0;
                 font-size: 1rem;
                 margin: 0;
                 border-radius: 8px;
                 margin-top: 0;
-                position: static;       /* bỏ absolute */
-                transform: none;        /* bỏ translate */
+                position: static;
+                transform: none;
+                min-width: unset !important;
             }
         }
         .modal-overlay {
@@ -298,7 +324,7 @@
             padding: 24px;
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             text-align: center;
         }
@@ -312,6 +338,9 @@
             font-size: 1rem;
             color: #333;
             margin-bottom: 24px;
+            width: auto !important;
+            padding: 0 !important;
+            margin: 0 0 18px 0 !important;
         }
         .close-button {
             background: #2c7be5;
@@ -336,7 +365,7 @@
             gap: 8px;
             align-items: flex-end;
         }
-        .exam-enter-btn, .exam-link-btn {
+        .exam-enter-btn, .exam-link-btn, .exam-result-btn {
             min-width: 120px;
             justify-content: center; 
         }
@@ -350,9 +379,9 @@
             <button onclick="backToLogin()">Thoát</button>
         </div>
     </div>
-    <div id="loadingModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(44,123,229,0.18);z-index:9999;align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:32px 38px;border-radius:12px;box-shadow:0 2px 12px rgba(44,123,229,0.18);font-size:1.15rem;color:#2c7be5;display:flex;align-items:center;gap:16px;">
-            <span class="modern-spinner" style="display:inline-block;"></span>
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(44,123,229,0.18); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #fff; padding: 32px 38px; border-radius: 12px; box-shadow: 0 2px 12px rgba(44,123,229,0.18); font-size: 1.15rem; color: #2c7be5; display: flex; align-items: center; gap: 16px;">
+            <span class="modern-spinner" style="display: inline-block;"></span>
             <span>Đang tải thông tin giáo viên...</span>
         </div>
     </div>
@@ -400,8 +429,8 @@
     </div>
     <div class="modal-overlay" id="copyLinkModal" style="display:none;">
         <div class="modal-box">
-            <div class="modal-title">Sao chép link đề thi</div>
-            <div class="modal-content" id="copyLinkContent"></div>
+            <div class="modal-title" id="copyLinkTitle"></div>
+            <div class="modal-content" id="copyLinkContent" style="color: #2c7be5;"></div>
             <button class="close-button" onclick="closeCopyLinkModal()">OK</button>
         </div>
     </div>
@@ -486,9 +515,9 @@
                 function renderPage(page) {
                     examListDiv.innerHTML = '';
                     let subjectName = '';
-                    const startIdx = (page - 1) * pageSize;
-                    const endIdx = Math.min(startIdx + pageSize, exams.length);
-                    for (let i = startIdx; i < endIdx; i++) {
+                        const startIdx = (page - 1) * pageSize;
+                        const endIdx = Math.min(startIdx + pageSize, exams.length);
+                        for (let i = startIdx; i < endIdx; i++) {
                         const exam = exams[i];
                         subjectName = '';
                         subjects.forEach(sub => {
@@ -496,23 +525,27 @@
                                 subjectName = sub.text || '';
                             }
                         });
-                        examListDiv.innerHTML += `
-                            <div class='exam-item exam-flex'>
-                                <div style='flex:1;'>
-                                    <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
-                                    <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b>| Số câu:<b> ${exam.total || ''}</b> | Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
-                                </div>
-                                <div class='exam-btn-group-side'>
-                                    <button class='exam-enter-btn' onclick="enterExam(this, '${exam.subject || ''}', '${exam.id || ''}')">
-                                        <span class='modern-spinner' style='display:none'></span>
-                                        Xem đề
-                                    </button>
-                                    <button class='exam-link-btn' onclick="getExamLink(this, '${exam.id || ''}', '${exam.subject || ''}')">
-                                        <span class='modern-spinner' style='display:none'></span>
-                                        Link đề
-                                    </button>
-                                </div>
-                            </div>`;
+                            examListDiv.innerHTML += `
+                                <div class='exam-item exam-flex'>
+                                    <div style='flex:1;'>
+                                        <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
+                                        <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b> | Số câu:<b> ${exam.total || ''}</b><br>Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
+                                    </div>
+                                    <div class='exam-btn-group-side'>
+                                        <button class='exam-enter-btn' onclick="enterExam(this, '${exam.subject || ''}', '${exam.id || ''}')">
+                                            <span class='modern-spinner' style='display:none'></span>
+                                            Xem đề
+                                        </button>
+                                        <button class='exam-link-btn' onclick="getExamLink(this, '${exam.id || ''}', '${exam.subject || ''}')">
+                                            <span class='modern-spinner' style='display:none'></span>
+                                            Link đề
+                                        </button>
+                                        <button class='exam-result-btn' onclick="showExamResult(this, '${exam.id || ''}')"}>
+                                            <span class='modern-spinner' style='display:none'></span>
+                                            Kết quả
+                                        </button>
+                                    </div>
+                                </div>`;
                     }
                 }
 
@@ -618,18 +651,48 @@
             spinner.style.display = 'inline-block';
             const link = window.location.origin + '/html/student.html?id=' + examId + '&subject=' + subject;
             navigator.clipboard.writeText(link).then(() => {
-                showCopyLinkModal('Đã copy link đề thi:<br><span style="word-break:break-all;color:#2c7be5;font-weight:500;">' + link + '</span>');
+                showCopyLinkModal('Đã copy link đề thi:', '<span style="word-break: break-all; color: #2c7be5; font-weight: 500;">' + link + '</span>');
             }, () => {
-                showCopyLinkModal('Không thể copy link. Link:<br><span style="word-break:break-all;color:#d63031;font-weight:500;">' + link + '</span>');
+                showCopyLinkModal('Không thể copy link. Link:', '<span style="word-break: break-all; color: #d63031; font-weight: 500;">' + link + '</span>');
             }).finally(() => {
                 spinner.style.display = 'none';
                 btn.disabled = false;
             });
         }
-        function showCopyLinkModal(content) {
+
+        function showExamResult(btn, examId) {
+            btn.disabled = true;
+            const spinner = btn.querySelector('.modern-spinner');
+            spinner.style.display = 'inline-block';
+            const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
+                fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Kết quả:', data);
+                    if (!data || !data.length) {
+                        spinner.style.display = 'none';
+                        btn.disabled = false;
+                        showCopyLinkModal('Thông báo: ', '<b>Đề này chưa có bài thi nào!</b>');
+                        return;
+                    }
+                    localStorage.setItem('studentResults', JSON.stringify(data));
+                    window.location.href = 'result.html?examId=' + examId;
+                })
+                .catch(() => {
+                    alert('Không lấy được kết quả!');
+                })
+                .finally(() => {
+                    spinner.style.display = 'none';
+                    btn.disabled = false;
+                });
+        }
+
+        function showCopyLinkModal(title, content) {
+            document.getElementById('copyLinkTitle').innerHTML = title; 
             document.getElementById('copyLinkContent').innerHTML = content;
             document.getElementById('copyLinkModal').style.display = 'flex';
         }
+
         function closeCopyLinkModal() {
             document.getElementById('copyLinkModal').style.display = 'none';
         }

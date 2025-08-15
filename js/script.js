@@ -11,6 +11,7 @@ let totalTimeSpent = 0; // giây
 let timerStartAt = null;
 
 function startExam() {
+	localStorage.removeItem('studentInfo');
 	window.location.href = 'exam.html';
 	initNav(); // Hiển thị trước nav
 	showQuestion(0); // Hiển thị ô đầu
@@ -496,12 +497,11 @@ function submitExam(type) {
 		⏱️ Thời gian làm bài: ${timeText}
 	`;
 	
-	showQuestion(current);
-	document.getElementById('resultBody').innerHTML = resultText;
-	document.getElementById('resultModal').style.display = 'block';
-	localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+	// Hiển thị spinner khi submit
+    const spinnerModal = document.getElementById('loadingModal');
+    if (spinnerModal) spinnerModal.style.display = 'flex';
 
-	// Đẩy dữ liệu lên BE
+    // Đẩy dữ liệu lên BE
     const point = Math.round((correctCount / totalQuestions) * 10 * 100) / 100; // Điểm = (số câu đúng / tổng câu hỏi) * 10, làm tròn đến 2 chữ số thập phân
     const spentTime = totalTimeSpent;
     const resultData = {
@@ -517,7 +517,20 @@ function submitExam(type) {
         point: point,
         note: note
     };
-    saveResult(resultData);
+    localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+    // Gửi kết quả lên BE, xong mới hiện modal kết quả
+    saveResult(resultData).then(() => {
+        if (spinnerModal) spinnerModal.style.display = 'none';
+        const resultText = `
+            ✅ Đúng: ${correctCount}<br>
+            ❌ Sai: ${wrongCount}<br>
+            ⚠️ Chưa làm: ${unansweredCount}<br>
+            ⏱️ Thời gian làm bài: ${timeText}
+        `;
+        showQuestion(current);
+        document.getElementById('resultBody').innerHTML = resultText;
+        document.getElementById('resultModal').style.display = 'block';
+    });
 }
 
 // Gửi kết quả thi lên backend
@@ -592,4 +605,23 @@ async function getTeacherById() {
 	} catch (err) {
 		console.error("❌ Lỗi khi gọi API:", err);
 	}
+}
+
+async function getResultById(examId) {   
+	const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
+	fetch(url)
+	.then(res => res.json())
+	.then(data => {
+		if (data) {
+			return data;
+		} else {
+			return null;
+		}
+	})
+	.catch(() => {
+		// Xử lý lỗi nếu cần
+	})
+	.finally(() => {
+		
+	});
 }

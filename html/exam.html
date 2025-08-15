@@ -8,10 +8,51 @@
         <script src="../data/data.js"></script>
         <script src="../js/script.js"></script>
         <link rel="stylesheet" href="../css/style.css">
+        <style>
+            @media (max-width: 600px) {
+                .container {
+                    flex-direction: column !important;
+                }
+                #studentInfoWeb {
+                    display: block !important;
+                }
+                #studentInfoSidebar {
+                    display: none !important;
+                }
+            }
+            @media (min-width: 601px) {
+                #studentInfoWeb {
+                    display: none !important;
+                }
+                #studentInfoSidebar {
+                    display: block !important;
+                }
+            }
+        </style>
     </head>
     <body>
         <div class="container">
+            <div class="student-info view-card" id="studentInfoWeb" style="margin: 12px; display: none;">
+                <h3 style="color: #2c7be5; margin-bottom:10px; font-size: 1.08rem;">Thông tin học sinh</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div><b>Họ tên:</b> <span id="studentName">-</span></div>
+                    <div><b>Mã học sinh:</b> <span id="studentCode">-</span></div>
+                    <div><b>Trường:</b> <span id="studentSchool">-</span></div>
+                    <div><b>Lớp:</b> <span id="studentClass">-</span></div>
+                    <div><b>Môn thi:</b> <span id="studentSubject">-</span></div>
+                </div>
+            </div>
             <aside class="sidebar">
+                <div class="student-info view-card" id="studentInfoSidebar" style="margin: 12px;">
+                    <h3 style="color: #2c7be5; margin-bottom:10px; font-size: 1.08rem;">Thông tin học sinh</h3>
+                    <div style="display: flex; flex-direction: column; gap:8px;">
+                        <div><b>Họ tên:</b> <span id="studentName">-</span></div>
+                        <div><b>Mã học sinh:</b> <span id="studentCode">-</span></div>
+                        <div><b>Trường:</b> <span id="studentSchool">-</span></div>
+                        <div><b>Lớp:</b> <span id="studentClass">-</span></div>
+                        <div><b>Môn thi:</b> <span id="studentSubject">-</span></div>
+                    </div>
+                </div>
                 <header>
                     <h2>Danh sách câu hỏi</h2>
                 </header>
@@ -72,6 +113,12 @@
             </div>
         </div>
     </div>
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(44,123,229,0.18); z-index: 9999; align-items: center; justify-content: center; ">
+        <div style="background: #fff; padding: 32px 38px; border-radius: 12px; box-shadow: 0 2px 12px rgba(44,123,229,0.18); font-size: 1.15rem; color: #2c7be5; display: flex; align-items: center; gap: 16px; ">
+            <span class="modern-spinner" style="display: inline-block;"></span>
+            <span>Đang nộp bài...</span>
+        </div>
+    </div>
 </html>
 <script>
     generatedQuestions = JSON.parse(localStorage.getItem('questions'));
@@ -97,6 +144,26 @@
         initNav(); // Hiển thị trước nav
         showQuestion(0); // Hiển thị ô đầu
         loadQuestions(); // Lấy dữ liệu
+
+        // Bind dữ liệu studentInfo nếu có
+        const studentInfo = JSON.parse(localStorage.getItem('studentInfo') || '{}');
+        if (studentInfo && studentInfo.name) {
+            const nameEls = document.querySelectorAll('#studentName');
+            const codeEls = document.querySelectorAll('#studentCode');
+            const schoolEls = document.querySelectorAll('#studentSchool');
+            const classEls = document.querySelectorAll('#studentClass');
+            const subjectEls = document.querySelectorAll('#studentSubject');
+            
+            nameEls.forEach(el => el.textContent = studentInfo.name || '-');
+            codeEls.forEach(el => el.textContent = studentInfo.code || '-');
+            schoolEls.forEach(el => el.textContent = studentInfo.school || '-');
+            classEls.forEach(el => el.textContent = studentInfo.class || '-');
+            subjects.forEach(sub => {
+                if (sub.value === localStorage.getItem('subject')) {
+                    subjectEls.forEach(el => el.textContent = sub.text || '-');
+                }
+            });
+        }
 
         if (localStorage.getItem('isSubmitted')) {
             showQuestion(0);

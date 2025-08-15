@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả thi - Danh sách sinh viên</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../data/data.js"></script>
+    <style>
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .result-container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 32px 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(44,123,229,0.10);
+        }
+        h2 {
+            text-align: center;
+            color: #2c7be5;
+            margin-bottom: 24px;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(44,123,229,0.08);
+            background: #fff;
+        }
+        .result-table thead th {
+            text-align: center;
+        }
+        .result-table th, .result-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e3e3e3;
+            text-align: left;
+        }
+        .result-table th {
+            background: #eaf4fb;
+            color: #2c7be5;
+            font-weight: 600;
+            border-right: 1px solid #dfe6e9;
+        }
+        .result-table th:last-child, .result-table td:last-child {
+            border-right: none;
+        }
+        .result-table tr:hover {
+            background: #f1f8ff;
+        }
+        .result-table td.name {
+            font-weight: 500;
+            color: #222;
+        }
+        .result-table td.code {
+            color: #636e72;
+            text-align: center;
+        }
+        .result-table td.class {
+            color: #222;
+            text-align: center;
+        }
+        .result-table td.point {
+            font-weight: bold;
+            color: #00b894;
+            text-align: center;
+        }
+        .result-table td.time {
+            color: #0984e3;
+            text-align: center;
+        }
+        .result-table td.status {
+            font-weight: 500;
+            color: #d63031;
+            text-align: center;
+        }
+        .result-table td.stt {
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            .result-container {
+                padding: 12px 2px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .result-table th, .result-table td {
+                padding: 8px 4px;
+                font-size: 0.95rem;
+            }
+            h2 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h2>Danh sách học sinh đã thi đề này</h2>
+        <table class="result-table" id="studentResultTable">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Họ tên</th>
+                    <th>Mã SV</th>
+                    <th>Lớp</th>
+                    <th>Trường</th>
+                    <th>Điểm</th>
+                    <th>Thời gian</th>
+                    <th>Xem bài thi</th>
+                    <th>Ngày nộp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu sẽ được render bằng JS -->
+            </tbody>
+        </table>
+        <div id="noResult" style="text-align: center; color: #888; font-size: 1.05rem; display: none;">Chưa có sinh viên nào thi đề này.</div>
+    </div>
+    <script>
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                const hour = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                const sec = String(d.getSeconds()).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${min}:${sec}`;
+            } catch {
+                return dateStr;
+            }
+        }
+        function formatTimeMin(timeVal) {
+            if (!timeVal) return '00:00';
+            // Nếu là số giây, chuyển sang mm:ss
+            if (!isNaN(timeVal)) {
+                const mins = Math.floor(Number(timeVal) / 60);
+                const secs = Number(timeVal) % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            // Nếu đã có dạng mm:ss thì giữ nguyên
+            if (/^\d{2}:\d{2}$/.test(String(timeVal))) return timeVal;
+            // Nếu là "x phút" thì chuyển sang mm:00
+            const match = String(timeVal).match(/(\d+)\s*phút/);
+            if (match) {
+                return `${String(match[1]).padStart(2, '0')}:00`;
+            }
+            return timeVal;
+        }
+        function renderStudentResults(results) {
+            const tableBody = document.querySelector('#studentResultTable tbody');
+            const noResultDiv = document.getElementById('noResult');
+            tableBody.innerHTML = '';
+            if (!results || results.length === 0) {
+                noResultDiv.style.display = 'block';
+                return;
+            }
+            noResultDiv.style.display = 'none';
+            results.forEach((student, idx) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td class="stt">${idx + 1}</td>
+                        <td class="name">${student.studentName}</td>
+                        <td class="code">${student.studentCode}</td>
+                        <td>${student.studentClass}</td>
+                        <td>${student.studentSchool}</td>
+                        <td class="point">${student.point}</td>
+                        <td class="time">${formatTimeMin(student.spentTime)}</td>
+                        <td style="text-align:center;"><button onclick="viewStudentExam('${student.studentCode}', '${student.examId || ''}')" style="padding:4px 10px;border-radius:6px;background:#2c7be5;color:#fff;border:none;cursor:pointer;">Xem</button></td>
+                        <td class="status">${formatDateTime(student.submitDate)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function viewStudentExam(studentCode, examId) {
+            // TODO: Xử lý hiển thị bài thi của sinh viên
+            alert('Xem bài thi của mã SV: ' + studentCode + ', mã đề: ' + examId);
+        }
+
+        window.onload = function() {
+            const examId = new URLSearchParams(window.location.search).get('examId');
+            if (!examId) {
+                alert('Không tìm thấy ID đề thi.');
+                return;
+            } else {
+                let studentResults = JSON.parse(localStorage.getItem('studentResults'));
+                renderStudentResults(studentResults);
+            }
+        };
+    </script>
+</body>
+</html>
