@@ -434,6 +434,7 @@ function submitExam(type) {
 			unAnswer: totalQuestions,
 			spentTime: 0,
 			point: 0,
+			answer: '[]',
 			note: note
 		};
 		saveResult(resultData);
@@ -454,13 +455,20 @@ function submitExam(type) {
 	let correctCount = 0;
 	let wrongCount = 0;
 	let unansweredCount = 0;
+	let answer = [];
 
 	generatedQuestions.forEach((q, idx) => {
 		const navItem = document.querySelectorAll('#questionNav li')[idx];
 		// Lấy context đáp án đúng theo vị trí correct
 		const correctIndex = parseInt(q.correct) - 1;
 		const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
-
+		
+		answer.push({
+			questionId: q.id,
+			userAnswer: q.userAnswer,
+			correctAnswer: correctContext
+		});
+		
 		if (!q.userAnswer) {
 			// Chưa làm
 			unansweredCount++;
@@ -515,8 +523,10 @@ function submitExam(type) {
         unAnswer: unansweredCount,
         spentTime: spentTime,
         point: point,
+		answer: JSON.stringify(answer), // Lưu dưới dạng chuỗi JSON
         note: note
     };
+	
     localStorage.setItem('questions', JSON.stringify(generatedQuestions));
     // Gửi kết quả lên BE, xong mới hiện modal kết quả
     saveResult(resultData).then(() => {
@@ -605,23 +615,4 @@ async function getTeacherById() {
 	} catch (err) {
 		console.error("❌ Lỗi khi gọi API:", err);
 	}
-}
-
-async function getResultById(examId) {   
-	const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
-	fetch(url)
-	.then(res => res.json())
-	.then(data => {
-		if (data) {
-			return data;
-		} else {
-			return null;
-		}
-	})
-	.catch(() => {
-		// Xử lý lỗi nếu cần
-	})
-	.finally(() => {
-		
-	});
 }

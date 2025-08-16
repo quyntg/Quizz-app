@@ -431,292 +431,293 @@
             localStorage.setItem('isLoggedIn', 0);
             window.location.href = 'login.html';
         }
-            function viewDraftToPrint() {
-                document.getElementById('draftFrame').src = 'form.html';
-                document.getElementById('draftModal').style.display = 'flex';
-            }
+        function viewDraftToPrint() {
+            localStorage.setItem('isViewResult', 0);
+            document.getElementById('draftFrame').src = 'form.html';
+            document.getElementById('draftModal').style.display = 'flex';
+        }
 
-            function closeDraftModal() {
-                document.getElementById('draftModal').style.display = 'none';
-                document.getElementById('draftFrame').src = '';
-            }
-            let questionsList = [];
-            let currentIndex = -1;
+        function closeDraftModal() {
+            document.getElementById('draftModal').style.display = 'none';
+            document.getElementById('draftFrame').src = '';
+        }
+        let questionsList = [];
+        let currentIndex = -1;
 
-            function loadFromJSON(data) {
-                if (data.length > 0) {					
-                    questionsList = data.map(q => {
-                        // Nếu correct là context, xác định đúng là A/B/C/D
-                        let correct = "";   
-                        if (q.correct == (q.options?.[0]?.id)) correct = "A";
-                        else if (q.correct == (q.options?.[1]?.id)) correct = "B";
-                        else if (q.correct == (q.options?.[2]?.id)) correct = "C";
-                        else if (q.correct == (q.options?.[3]?.id)) correct = "D";
-                        else correct = ""; // Không khớp đáp án nào
+        function loadFromJSON(data) {
+            if (data.length > 0) {					
+                questionsList = data.map(q => {
+                    // Nếu correct là context, xác định đúng là A/B/C/D
+                    let correct = "";   
+                    if (q.correct == (q.options?.[0]?.id)) correct = "A";
+                    else if (q.correct == (q.options?.[1]?.id)) correct = "B";
+                    else if (q.correct == (q.options?.[2]?.id)) correct = "C";
+                    else if (q.correct == (q.options?.[3]?.id)) correct = "D";
+                    else correct = ""; // Không khớp đáp án nào
 
-                        return {
-                            id: q.id,
-                            question: q.question,
-                            subject: q.subject || "",
-                            grade: q.grade || "",
-                            media: q.media || "",
-                            A: q.options?.[0]?.context || q.A || "",
-                            B: q.options?.[1]?.context || q.B || "",
-                            C: q.options?.[2]?.context || q.C || "",
-                            D: q.options?.[3]?.context || q.D || "",
-                            correct: correct,
-                            description: q.description || "",
-                            difficulty: q.difficulty || "dễ"
-                        };
-                    });
-                    renderList();
-                    selectQuestion(0);
-                }
-            }
-
-            function renderList() {
-                const container = document.getElementById("listContainer");
-                container.innerHTML = "";
-                questionsList.forEach((q, i) => {
-                    const div = document.createElement("div");
-                    div.className = "q-item" + (i === currentIndex ? " active" : "");
-                    div.innerHTML = `<b>${q.id || `Q${i + 1}`}</b>. ${q.question}`;
-                    div.onclick = () => selectQuestion(i);
-                    container.appendChild(div);
-                });
-            }
-
-            function addQuestion() {
-                const newQuestion = {
-                    id: `Q${questionsList.length + 1}`,
-                    question: "",
-                    subject: "",
-                    grade: "",
-                    media: "",
-                    A: "",
-                    B: "",
-                    C: "",
-                    D: "",
-                    correct: "",
-                    description: "",
-                    difficulty: "dễ"
-                };
-                questionsList.push(newQuestion);
-                selectQuestion(questionsList.length - 1);
-            }
-
-            function selectQuestion(index) {
-                currentIndex = index;
-                const q = questionsList[index];
-                document.getElementById("id").value = q.id;
-                document.getElementById("question").value = q.question;
-                document.getElementById("subject").value = q.subject;
-                document.getElementById("grade").value = q.grade || localStorage.getItem('grade') || '';
-                document.getElementById("media").value = q.media;
-                document.getElementById("A").value = q.A;
-                document.getElementById("B").value = q.B;
-                document.getElementById("C").value = q.C;
-                document.getElementById("D").value = q.D;
-                // Ưu tiên correctId, nếu có thì chuyển sang A/B/C/D
-                
-                let correctVal = "";
-                if (typeof q.correctId !== 'undefined' && q.correctId !== null && q.correctId !== "") {
-                    if (q.correctId == 1) correctVal = "A";
-                    else if (q.correctId == 2) correctVal = "B";
-                    else if (q.correctId == 3) correctVal = "C";
-                    else if (q.correctId == 4) correctVal = "D";
-                } else if (q.correct) {
-                    correctVal = q.correct.toString().toUpperCase().trim();
-                }
-                document.getElementById("correct").value = correctVal;
-                document.getElementById("description").value = q.description;
-                document.getElementById("difficulty").value = q.difficulty;
-                renderList();
-            }
-
-            function updateCurrent() {
-                if (currentIndex === -1) return;
-                const q = questionsList[currentIndex];
-                q.id = document.getElementById("id").value;
-                q.question = document.getElementById("question").value;
-                q.subject = document.getElementById("subject").value;
-                q.grade = document.getElementById("grade").value;
-                q.media = document.getElementById("media").value;
-                q.A = document.getElementById("A").value;
-                q.B = document.getElementById("B").value;
-                q.C = document.getElementById("C").value;
-                q.D = document.getElementById("D").value;
-                // Khi lưu đáp án đúng, chuyển từ A/B/C/D thành 1/2/3/4
-                let correctVal = document.getElementById("correct").value.toUpperCase();
-                if (correctVal === "A") q.correct = 1;
-                else if (correctVal === "B") q.correct = 2;
-                else if (correctVal === "C") q.correct = 3;
-                else if (correctVal === "D") q.correct = 4;
-                else q.correct = correctVal;
-                q.description = document.getElementById("description").value;
-                q.difficulty = document.getElementById("difficulty").value;
-                renderList();
-            }
-            ["id", "question", "subject", "grade", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
-                document.getElementById(id).addEventListener("input", updateCurrent);
-            });
-
-            function generateJSON() {
-                const output = questionsList.map((q, index) => {
-                    const correctMap = {
-                        A: "1",
-                        B: "2",
-                        C: "3",
-                        D: "4"
-                    };
-                    const correct = correctMap[q.correct] || "";
                     return {
-                        id: q.id || `Q${index + 1}`,
+                        id: q.id,
                         question: q.question,
                         subject: q.subject || "",
                         grade: q.grade || "",
                         media: q.media || "",
-                        options: [{
-                            context: q.A || "",
-                            id: 1
-                        }, {
-                            context: q.B || "",
-                            id: 2
-                        }, {
-                            context: q.C || "",
-                            id: 3
-                        }, {
-                            context: q.D || "",
-                            id: 4
-                        }],
-                        correct,
+                        A: q.options?.[0]?.context || q.A || "",
+                        B: q.options?.[1]?.context || q.B || "",
+                        C: q.options?.[2]?.context || q.C || "",
+                        D: q.options?.[3]?.context || q.D || "",
+                        correct: correct,
                         description: q.description || "",
-                        difficulty: q.difficulty
+                        difficulty: q.difficulty || "dễ"
                     };
                 });
-                console.log("output---", output);
+                renderList();
+                selectQuestion(0);
             }
-            // Khởi tạo từ JSON sẵn
-            window.onload = () => {				
-                const subjectSelect = document.getElementById('subject');
-                if (subjectSelect && subjectSelect.options.length <= 1) {
-                    subjects.forEach(sub => {
-                        const opt = document.createElement('option');
-                        opt.value = sub.value;
-                        opt.textContent = sub.text;
-                        subjectSelect.appendChild(opt);
-                    });
-                }
-                loadFromJSON(JSON.parse(localStorage.getItem('questions')));
-                let isNewExam = localStorage.getItem('isNewExam');
-                let btnSaveExam = document.getElementById('btnSaveExam');
-                let btnStartExam = document.getElementById('btnStartExam');
-                let afterSaveBtns = document.getElementById('afterSaveBtns');
-                if (isNewExam == 0) {
-                    btnSaveExam.classList.add('btn-disabled');
-                    btnStartExam.classList.remove('btn-disabled');
-                    afterSaveBtns.style.display = 'flex';
-                } else if (isNewExam == 1) {
-                    btnSaveExam.classList.remove('btn-disabled');
-                    btnStartExam.classList.remove('btn-disabled');
-                    afterSaveBtns.style.display = 'none';
-                }
-            };
+        }
 
-            function disableAllButtons() {
-                document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        function renderList() {
+            const container = document.getElementById("listContainer");
+            container.innerHTML = "";
+            questionsList.forEach((q, i) => {
+                const div = document.createElement("div");
+                div.className = "q-item" + (i === currentIndex ? " active" : "");
+                div.innerHTML = `<b>${q.id || `Q${i + 1}`}</b>. ${q.question}`;
+                div.onclick = () => selectQuestion(i);
+                container.appendChild(div);
+            });
+        }
+
+        function addQuestion() {
+            const newQuestion = {
+                id: `Q${questionsList.length + 1}`,
+                question: "",
+                subject: "",
+                grade: "",
+                media: "",
+                A: "",
+                B: "",
+                C: "",
+                D: "",
+                correct: "",
+                description: "",
+                difficulty: "dễ"
+            };
+            questionsList.push(newQuestion);
+            selectQuestion(questionsList.length - 1);
+        }
+
+        function selectQuestion(index) {
+            currentIndex = index;
+            const q = questionsList[index];
+            document.getElementById("id").value = q.id;
+            document.getElementById("question").value = q.question;
+            document.getElementById("subject").value = q.subject;
+            document.getElementById("grade").value = q.grade || localStorage.getItem('grade') || '';
+            document.getElementById("media").value = q.media;
+            document.getElementById("A").value = q.A;
+            document.getElementById("B").value = q.B;
+            document.getElementById("C").value = q.C;
+            document.getElementById("D").value = q.D;
+            // Ưu tiên correctId, nếu có thì chuyển sang A/B/C/D
+            
+            let correctVal = "";
+            if (typeof q.correctId !== 'undefined' && q.correctId !== null && q.correctId !== "") {
+                if (q.correctId == 1) correctVal = "A";
+                else if (q.correctId == 2) correctVal = "B";
+                else if (q.correctId == 3) correctVal = "C";
+                else if (q.correctId == 4) correctVal = "D";
+            } else if (q.correct) {
+                correctVal = q.correct.toString().toUpperCase().trim();
             }
-            function enableAllButtons() {
-                document.querySelectorAll('button').forEach(btn => btn.disabled = false);
-            }
-            function showResultModal(title, content) {
-                document.getElementById('resultTitle').innerText = title;
-                document.getElementById('resultContent').innerHTML = content;
-                document.getElementById('resultModal').style.display = 'flex';
-            }
-            function closeResultModal() {
-                document.getElementById('resultModal').style.display = 'none';
-            }
-            function saveExam() {
-                const btn = document.getElementById('btnSaveExam');
-                const icon = document.getElementById('iconSaveExam');
-                disableAllButtons();
-                icon.style.display = 'inline-block';
-                
-                // Tùy chỉnh logic lưu đề thi tại đây
-                let user = JSON.parse(localStorage.getItem('user')) || {};
-                let form = {
-                    easy: localStorage.getItem('easyCount') || 0,
-                    medium: localStorage.getItem('mediumCount') || 0,
-                    hard: localStorage.getItem('hardCount') || 0,
-                }
-                let listQ = '';
-                questionsList.forEach(q => {
-                    if (listQ == '') {
-                        listQ = q.id;
-                    } else {
-                        listQ += `,${q.id}`;
-                    } 
-                });
-                const examData = {
-                    action: 'saveExam',
-                    name: localStorage.getItem('examName') || '',
-                    teacherId: user.id || '',
-                    school: localStorage.getItem('school') || '',
-                    subject: localStorage.getItem('subject') || '',
-                    grade: localStorage.getItem('grade') || '',
-                    time: localStorage.getItem('examTime') || '',
-                    total: localStorage.getItem('totalQuestions') || '',
-                    form: JSON.stringify(form) || '',
-                    list: JSON.stringify(listQ) || '',
-                    schoolLevel: user.schoolLevel || ''
+            document.getElementById("correct").value = correctVal;
+            document.getElementById("description").value = q.description;
+            document.getElementById("difficulty").value = q.difficulty;
+            renderList();
+        }
+
+        function updateCurrent() {
+            if (currentIndex === -1) return;
+            const q = questionsList[currentIndex];
+            q.id = document.getElementById("id").value;
+            q.question = document.getElementById("question").value;
+            q.subject = document.getElementById("subject").value;
+            q.grade = document.getElementById("grade").value;
+            q.media = document.getElementById("media").value;
+            q.A = document.getElementById("A").value;
+            q.B = document.getElementById("B").value;
+            q.C = document.getElementById("C").value;
+            q.D = document.getElementById("D").value;
+            // Khi lưu đáp án đúng, chuyển từ A/B/C/D thành 1/2/3/4
+            let correctVal = document.getElementById("correct").value.toUpperCase();
+            if (correctVal === "A") q.correct = 1;
+            else if (correctVal === "B") q.correct = 2;
+            else if (correctVal === "C") q.correct = 3;
+            else if (correctVal === "D") q.correct = 4;
+            else q.correct = correctVal;
+            q.description = document.getElementById("description").value;
+            q.difficulty = document.getElementById("difficulty").value;
+            renderList();
+        }
+        ["id", "question", "subject", "grade", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
+            document.getElementById(id).addEventListener("input", updateCurrent);
+        });
+
+        function generateJSON() {
+            const output = questionsList.map((q, index) => {
+                const correctMap = {
+                    A: "1",
+                    B: "2",
+                    C: "3",
+                    D: "4"
                 };
-                // Gọi API lưu đề thi
-                fetch(ggApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(examData)
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        showResultModal('Lưu đề thi thành công', 'Đề thi đã được lưu!');
-                        localStorage.setItem('isChange', 1);
-                        const btn = document.getElementById('btnSaveExam');
-                        btn.classList.add('btn-disabled');
-                    } else {
-                        showResultModal('Lỗi lưu đề thi', data.message || 'Lưu đề thi thất bại!');
-                    }
-                })
-                .catch(() => {
-                    showResultModal('Lỗi lưu đề thi', 'Lưu đề thi thất bại!');
-                })
-                .finally(() => {
-                    enableAllButtons();
-                    icon.style.display = 'none';
+                const correct = correctMap[q.correct] || "";
+                return {
+                    id: q.id || `Q${index + 1}`,
+                    question: q.question,
+                    subject: q.subject || "",
+                    grade: q.grade || "",
+                    media: q.media || "",
+                    options: [{
+                        context: q.A || "",
+                        id: 1
+                    }, {
+                        context: q.B || "",
+                        id: 2
+                    }, {
+                        context: q.C || "",
+                        id: 3
+                    }, {
+                        context: q.D || "",
+                        id: 4
+                    }],
+                    correct,
+                    description: q.description || "",
+                    difficulty: q.difficulty
+                };
+            });
+            console.log("output---", output);
+        }
+        // Khởi tạo từ JSON sẵn
+        window.onload = () => {				
+            const subjectSelect = document.getElementById('subject');
+            if (subjectSelect && subjectSelect.options.length <= 1) {
+                subjects.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.value;
+                    opt.textContent = sub.text;
+                    subjectSelect.appendChild(opt);
                 });
-            }      
-            function copyExamLink() {
-                let examId = localStorage.getItem('examId') || '';
-                let subject = localStorage.getItem('subject') || '';
-                if (!examId) {
-                    showCopyLinkModal('Không tìm thấy ID đề thi!');
-                    return;
+            }
+            loadFromJSON(JSON.parse(localStorage.getItem('questions')));
+            let isNewExam = localStorage.getItem('isNewExam');
+            let btnSaveExam = document.getElementById('btnSaveExam');
+            let btnStartExam = document.getElementById('btnStartExam');
+            let afterSaveBtns = document.getElementById('afterSaveBtns');
+            if (isNewExam == 0) {
+                btnSaveExam.classList.add('btn-disabled');
+                btnStartExam.classList.remove('btn-disabled');
+                afterSaveBtns.style.display = 'flex';
+            } else if (isNewExam == 1) {
+                btnSaveExam.classList.remove('btn-disabled');
+                btnStartExam.classList.remove('btn-disabled');
+                afterSaveBtns.style.display = 'none';
+            }
+        };
+
+        function disableAllButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        }
+        function enableAllButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        function showResultModal(title, content) {
+            document.getElementById('resultTitle').innerText = title;
+            document.getElementById('resultContent').innerHTML = content;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+        function saveExam() {
+            const btn = document.getElementById('btnSaveExam');
+            const icon = document.getElementById('iconSaveExam');
+            disableAllButtons();
+            icon.style.display = 'inline-block';
+            
+            // Tùy chỉnh logic lưu đề thi tại đây
+            let user = JSON.parse(localStorage.getItem('user')) || {};
+            let form = {
+                easy: localStorage.getItem('easyCount') || 0,
+                medium: localStorage.getItem('mediumCount') || 0,
+                hard: localStorage.getItem('hardCount') || 0,
+            }
+            let listQ = '';
+            questionsList.forEach(q => {
+                if (listQ == '') {
+                    listQ = q.id;
+                } else {
+                    listQ += `,${q.id}`;
+                } 
+            });
+            const examData = {
+                action: 'saveExam',
+                name: localStorage.getItem('examName') || '',
+                teacherId: user.id || '',
+                school: localStorage.getItem('school') || '',
+                subject: localStorage.getItem('subject') || '',
+                grade: localStorage.getItem('grade') || '',
+                time: localStorage.getItem('examTime') || '',
+                total: localStorage.getItem('totalQuestions') || '',
+                form: JSON.stringify(form) || '',
+                list: JSON.stringify(listQ) || '',
+                schoolLevel: user.schoolLevel || ''
+            };
+            // Gọi API lưu đề thi
+            fetch(ggApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(examData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showResultModal('Lưu đề thi thành công', 'Đề thi đã được lưu!');
+                    localStorage.setItem('isChange', 1);
+                    const btn = document.getElementById('btnSaveExam');
+                    btn.classList.add('btn-disabled');
+                } else {
+                    showResultModal('Lỗi lưu đề thi', data.message || 'Lưu đề thi thất bại!');
                 }
-                const link = window.location.origin + '/html/student.html?id=' + examId + '&subject=' + subject;
-                navigator.clipboard.writeText(link).then(() => {
-                    showCopyLinkModal('Đã copy link đề thi:<br><span style="word-break:break-all;color:#2c7be5;font-weight:500;">' + link + '</span>');
-                }, () => {
-                    showCopyLinkModal('Không thể copy link. Link:<br><span style="word-break:break-all;color:#d63031;font-weight:500;">' + link + '</span>');
-                });
+            })
+            .catch(() => {
+                showResultModal('Lỗi lưu đề thi', 'Lưu đề thi thất bại!');
+            })
+            .finally(() => {
+                enableAllButtons();
+                icon.style.display = 'none';
+            });
+        }      
+        function copyExamLink() {
+            let examId = localStorage.getItem('examId') || '';
+            let subject = localStorage.getItem('subject') || '';
+            if (!examId) {
+                showCopyLinkModal('Không tìm thấy ID đề thi!');
+                return;
             }
-            function showCopyLinkModal(content) {
-                document.getElementById('copyLinkContent').innerHTML = content;
-                document.getElementById('copyLinkModal').style.display = 'flex';
-            }
-            function closeCopyLinkModal() {
-                document.getElementById('copyLinkModal').style.display = 'none';
-            }
+            const link = window.location.origin + '/html/student.html?id=' + examId + '&subject=' + subject;
+            navigator.clipboard.writeText(link).then(() => {
+                showCopyLinkModal('Đã copy link đề thi:<br><span style="word-break:break-all;color:#2c7be5;font-weight:500;">' + link + '</span>');
+            }, () => {
+                showCopyLinkModal('Không thể copy link. Link:<br><span style="word-break:break-all;color:#d63031;font-weight:500;">' + link + '</span>');
+            });
+        }
+        function showCopyLinkModal(content) {
+            document.getElementById('copyLinkContent').innerHTML = content;
+            document.getElementById('copyLinkModal').style.display = 'flex';
+        }
+        function closeCopyLinkModal() {
+            document.getElementById('copyLinkModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>

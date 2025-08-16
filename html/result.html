@@ -85,20 +85,81 @@
                 padding: 12px 2px;
                 border-radius: 0;
                 box-shadow: none;
+                background-color: inherit;
             }
-            .result-table th, .result-table td {
-                padding: 8px 4px;
-                font-size: 0.95rem;
+            .result-table {
+                display: none;
+            }
+            .result-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .result-card {
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(44,123,229,0.08);
+                padding: 14px 12px;
+                font-size: 0.98rem;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .result-card .card-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+            }
+            .result-card .card-row.button-row {
+                justify-content: center;
+            }
+            .result-card .card-value {
+                font-weight: 600;
+                color: #2c7be5;
+            }
+            .result-card .card-label {
+                color: #636e72;
+                font-weight: 500;
+                min-width: 80px;
+            }
+            .result-card .card-value {
+                font-weight: 600;
+                color: #2c7be5;
+            }
+            .result-card .point {
+                color: #00b894;
+            }
+            .result-card .status {
+                color: #d63031;
             }
             h2 {
                 font-size: 1.1rem;
             }
         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <div id="modalLoading" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 999; align-items: center; justify-content: center; ">
+        <div style="background: #fff; padding: 24px 32px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); font-size: 1.2rem; color: #333; display: flex; flex-direction: column; align-items: center; ">
+            <div class="spinner" style="border: 4px solid #eee; border-top: 4px solid #2c7be5; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 12px; "></div>
+            <span>Đang tải...</span>
+        </div>
+    </div>
+    <div id="viewExamModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); z-index: 9999; align-items: center; justify-content: center; ">
+        <div style="background: white; max-width: 900px; width: 90vw; max-height: 90vh; overflow: auto; padding: 40px 32px 32px 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: relative; ">
+            <button id="closeViewExam" onclick="closeViewExamModal()" style="position: absolute; top: 8px; right: 8px; font-size: 20px; ">X</button>
+            <h2 id="viewExamTitle" style="margin-bottom: 16px; ">Xem bài thi</h2>
+            <iframe id="viewExamFrame" src="" style="width: 100%; height: 80vh; border: none; border-radius: 8px; background: #f8f9fa; display: block; "></iframe>
+        </div>
+    </div>
     <div class="result-container">
         <h2>Danh sách học sinh đã thi đề này</h2>
+        <table class="result-table" id="studentResultTable">
         <table class="result-table" id="studentResultTable">
             <thead>
                 <tr>
@@ -117,7 +178,9 @@
                 <!-- Dữ liệu sẽ được render bằng JS -->
             </tbody>
         </table>
+        <div class="result-list" id="studentResultList" style="display:none;"></div>
         <div id="noResult" style="text-align: center; color: #888; font-size: 1.05rem; display: none;">Chưa có sinh viên nào thi đề này.</div>
+        <div id="pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;"></div>
     </div>
     <script>
         function formatDateTime(dateStr) {
@@ -154,45 +217,147 @@
         }
         function renderStudentResults(results) {
             const tableBody = document.querySelector('#studentResultTable tbody');
+            const resultList = document.getElementById('studentResultList');
             const noResultDiv = document.getElementById('noResult');
+            const paginationDiv = document.getElementById('pagination');
             tableBody.innerHTML = '';
+            resultList.innerHTML = '';
+            paginationDiv.innerHTML = '';
             if (!results || results.length === 0) {
                 noResultDiv.style.display = 'block';
+                paginationDiv.style.display = 'none';
                 return;
             }
             noResultDiv.style.display = 'none';
-            results.forEach((student, idx) => {
-                tableBody.innerHTML += `
-                    <tr>
-                        <td class="stt">${idx + 1}</td>
-                        <td class="name">${student.studentName}</td>
-                        <td class="code">${student.studentCode}</td>
-                        <td>${student.studentClass}</td>
-                        <td>${student.studentSchool}</td>
-                        <td class="point">${student.point}</td>
-                        <td class="time">${formatTimeMin(student.spentTime)}</td>
-                        <td style="text-align:center;"><button onclick="viewStudentExam('${student.studentCode}', '${student.examId || ''}')" style="padding:4px 10px;border-radius:6px;background:#2c7be5;color:#fff;border:none;cursor:pointer;">Xem</button></td>
-                        <td class="status">${formatDateTime(student.submitDate)}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function viewStudentExam(studentCode, examId) {
-            // TODO: Xử lý hiển thị bài thi của sinh viên
-            alert('Xem bài thi của mã SV: ' + studentCode + ', mã đề: ' + examId);
-        }
-
-        window.onload = function() {
-            const examId = new URLSearchParams(window.location.search).get('examId');
-            if (!examId) {
-                alert('Không tìm thấy ID đề thi.');
-                return;
-            } else {
-                let studentResults = JSON.parse(localStorage.getItem('studentResults'));
-                renderStudentResults(studentResults);
+            // Phân trang
+            const isMobile = window.innerWidth <= 600;
+            const pageSize = isMobile ? 5 : 10;
+            let currentPage = 1;
+            const totalPages = Math.ceil(results.length / pageSize);
+            function renderPage(page) {
+                tableBody.innerHTML = '';
+                resultList.innerHTML = '';
+                const startIdx = (page - 1) * pageSize;
+                const endIdx = Math.min(startIdx + pageSize, results.length);
+                for (let i = startIdx; i < endIdx; i++) {
+                    const result = results[i];
+                    // Bảng web
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="stt">${i + 1}</td>
+                            <td class="name">${result.studentName}</td>
+                            <td class="code">${result.studentCode}</td>
+                            <td>${result.studentClass}</td>
+                            <td>${result.studentSchool}</td>
+                            <td class="point">${result.point}</td>
+                            <td class="time">${formatTimeMin(result.spentTime)}</td>
+                            <td style="text-align:center;"><button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px;  border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem</button></td>
+                            <td class="status">${formatDateTime(result.submitDate)}</td>
+                        </tr>
+                    `;
+                    // Card mobile
+                    resultList.innerHTML += `
+                        <div class="result-card">
+                            <div class="card-row"><span class="card-label">STT:</span> <span class="card-value">${i + 1}</span></div>
+                            <div class="card-row"><span class="card-label">Họ tên:</span> <span class="card-value">${result.studentName}</span></div>
+                            <div class="card-row"><span class="card-label">Mã SV:</span> <span class="card-value">${result.studentCode}</span></div>
+                            <div class="card-row"><span class="card-label">Lớp:</span> <span class="card-value">${result.studentClass}</span></div>
+                            <div class="card-row"><span class="card-label">Trường:</span> <span class="card-value">${result.studentSchool}</span></div>
+                            <div class="card-row"><span class="card-label">Điểm:</span> <span class="point card-value">${result.point}</span></div>
+                            <div class="card-row"><span class="card-label">Thời gian:</span> <span class="card-value">${formatTimeMin(result.spentTime)}</span></div>
+                            <div class="card-row"><span class="card-label">Ngày nộp:</span> <span class="card-value">${formatDateTime(result.submitDate)}</span></div>
+                            <br>
+                            <div class="card-row button-row"><button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px; border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem bài thi</button></div>
+                        </div>
+                    `;
+                }
+                // Hiển thị đúng phần theo thiết bị
+                if (isMobile) {
+                    document.getElementById('studentResultTable').style.display = 'none';
+                    resultList.style.display = 'flex';
+                } else {
+                    document.getElementById('studentResultTable').style.display = '';
+                    resultList.style.display = 'none';
+                }
             }
-        };
+            // Render phân trang nếu cần
+            if (results.length > pageSize) {
+                paginationDiv.style.display = 'flex';
+                function createBtn(text, page, disabled) {
+                    return `<button ${disabled ? 'disabled' : ''} onclick="goToPage(${page})" style="padding:4px 10px;border-radius:6px;background:#eaf4fb;color:#2c7be5;border:none;cursor:pointer;font-weight:500;">${text}</button>`;
+                }
+                window.goToPage = function(page) {
+                    if (page < 1 || page > totalPages) return;
+                    currentPage = page;
+                    renderPage(currentPage);
+                    renderPagination();
+                }
+                function renderPagination() {
+                    let html = '';
+                    html += createBtn('«', 1, currentPage === 1);
+                    html += createBtn('‹', currentPage - 1, currentPage === 1);
+                    html += `<span style="margin:0 8px;">Trang ${currentPage}/${totalPages}</span>`;
+                    html += createBtn('›', currentPage + 1, currentPage === totalPages);
+                    html += createBtn('»', totalPages, currentPage === totalPages);
+                    paginationDiv.innerHTML = html;
+                }
+                renderPagination();
+            } else {
+                paginationDiv.style.display = 'none';
+            }
+            renderPage(currentPage);
+        }
+
+        function viewStudentExam(studentCode, studentName, studentClass, examId, resultId) {
+            // Mở modal xem bài thi, truyền mã SV và mã đề vào form.html qua query string
+            localStorage.setItem('isViewResult', 1);
+            localStorage.setItem('isStudent', 1);
+            localStorage.setItem('resultId', resultId);
+            localStorage.setItem('studentName', studentName);
+            localStorage.setItem('studentClass', studentClass);
+            var frame = document.getElementById('viewExamFrame');
+            frame.src = `form.html`;
+            document.getElementById('viewExamModal').style.display = 'flex';
+            document.getElementById('viewExamTitle').textContent = `Xem bài làm của mã học sinh: ${studentCode}`;
+        }
+
+        function closeViewExamModal() {
+            document.getElementById('viewExamModal').style.display = 'none';
+            document.getElementById('viewExamFrame').src = '';
+        }
+
+        function isPageReload() {
+            const navEntries = performance.getEntriesByType("navigation");
+            if (navEntries.length > 0) {
+                return navEntries[0].type === "reload";
+            }
+            return performance.navigation.type === performance.navigation.TYPE_RELOAD;
+        }
+
+        let studentResults = JSON.parse(localStorage.getItem('studentResults'));
+        let examId = new URLSearchParams(window.location.search).get('examId');
+
+        function showLoadingModal(show) {
+            document.getElementById('modalLoading').style.display = show ? 'flex' : 'none';
+        }
+
+        if (isPageReload()) {
+            const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
+            showLoadingModal(true);
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    renderStudentResults(data);
+                })
+                .catch(() => {
+                    alert('Không lấy được kết quả!');
+                })
+                .finally(() => {
+                    showLoadingModal(false);
+                });
+        } else {
+            renderStudentResults(studentResults);
+        }
     </script>
 </body>
 </html>

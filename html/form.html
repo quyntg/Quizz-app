@@ -6,7 +6,38 @@
         <title>Đề thi trắc nghiệm</title>
         <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
         <script src="../data/data.js"></script>
+        <script src="../js/script.js"></script>
         <style>
+            .option-correct {
+                background: #d4f7dc !important;
+                border: 2px solid #00b894 !important;
+                color: #218c5a !important;
+                font-weight: bold;
+            }
+            .option-user {
+                background: #ffe6e6 !important;
+                border: 2px solid #d63031 !important;
+                color: #d63031 !important;
+                font-weight: bold;
+            }
+            .option-correct-empty {
+                background: #fff9d6 !important;
+                border: 2px solid #f7b731 !important;
+                color: #b8860b !important;
+                font-weight: bold;
+            }
+            .option-correct {
+                background: #d4f7dc !important;
+                border: 2px solid #00b894 !important;
+                color: #218c5a !important;
+                font-weight: bold;
+            }
+            .option-user {
+                background: #ffe6e6 !important;
+                border: 2px solid #d63031 !important;
+                color: #d63031 !important;
+                font-weight: bold;
+            }
             body {
                 background: #f5f7fa;
                 margin: 0;
@@ -140,11 +171,21 @@
                     margin: 0 !important;
                 }
             }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
         </style>
     </head>
     <body>
         <button class="btn-download" onclick="downloadPDF()">Tải về PDF</button>
-        <div id="exam-content" class="exam-container">
+        <div id="modalLoading" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.18); z-index: 999; align-items: center; justify-content: center; ">
+            <div style="background: #fff; padding: 24px 32px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); font-size: 1.2rem; color: #333; display: flex; flex-direction: column; align-items: center; ">
+                <div class="spinner" style="border: 4px solid #eee; border-top: 4px solid #2c7be5; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 12px; "></div>
+                <span>Đang tải bài làm...</span>
+            </div>
+        </div>
+        <div id="exam-content" class="exam-container" style="display:none;">
             <div class="exam-header-block">
                 <div class="header-columns">
                     <div class="header-left">
@@ -164,12 +205,15 @@
                     </div>
                 </div>
                 <div class="student-info">
-                    <p>
-                        <strong>Họ, tên học sinh:</strong> ..........................................................................................
-                    </p>
-                    <p>
-                        <strong>Lớp:</strong> ...............................................................................................
-                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p><strong>Họ, tên học sinh:</strong> <span id="studentNameForm"></span></p>
+                            <p><strong>Lớp:</strong> <span id="studentClassForm"></span></p>
+                        </div>
+                        <div id="pointView" style="text-align: right; padding-right: 20%; font-size: 18px; font-weight: bold;color: #00b894; display: none;">
+                            Điểm: <span id="studentPoint"></span>
+                        </div>
+                    </div>
                     <p class="bailam-title">BÀI LÀM</p>
                 </div>
             </div>
@@ -180,6 +224,9 @@
         <script>            
             const time = localStorage.getItem('examTime') || '';
             const school = localStorage.getItem('school') || '';
+            const isViewResult = localStorage.getItem('isViewResult');
+            let examName = '';
+
             let subject = '';
             const subjectSelect = localStorage.getItem('subject') || '';
             if (subjectSelect) {
@@ -192,46 +239,107 @@
             document.getElementById('timeForm').textContent = time;
             document.getElementById('subjectForm').textContent = subject;
             document.getElementById('schoolForm').textContent = school;
-
-            let questionss = JSON.parse(localStorage.getItem('questions')) || [];
-            let questionList = '';
-            console.log(questionss);
-
-            if (questionss.length > 0) {
-                questionss.forEach((ques, index) => {
-                    questionList += `<div class="question">`;
-                    questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
-                    questionList += `<ul class="options">`; 
-                    ques.options.forEach((opt, ind) => {
-                        let label = '';
-                        switch (ind) {
-                            case 0:
-                                label = 'A. ';
-                                break;
-                            case 1:
-                                label = 'B. ';
-                                break;
-                            case 2:
-                                label = 'C. ';
-                                break;
-                            case 3:
-                                label = 'D. ';
-                                break;
-                        }
-                        questionList += `<li>${label}${opt.context}</li>`;
-                    });
-                    questionList += `</ul>`;
-                    questionList += `</div>`;
-                });
+            if (isViewResult == 1) {
+                document.getElementById('studentNameForm').textContent = localStorage.getItem('studentName') || '';
+                document.getElementById('studentClassForm').textContent = localStorage.getItem('studentClass') || '';
+            } else {
+                document.getElementById('studentNameForm').textContent = '................................................................................';
+                document.getElementById('studentClassForm').textContent = '................................................................................';
             }
-            let listQuestion = document.getElementById('list-question');
-            listQuestion.innerHTML = questionList;
+
+            // Hàm render đề thi sau khi lấy xong dữ liệu
+            function renderExam(questionss) {
+                let questionList = '';
+                if (questionss.length > 0) {
+                    questionss.forEach((ques, index) => {
+                        questionList += `<div class="question">`;
+                        questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                        questionList += `<ul class="options">`;
+                        ques.options.forEach((opt, ind) => {
+                            let label = '';
+                            switch (ind) {
+                                case 0: label = 'A. '; break;
+                                case 1: label = 'B. '; break;
+                                case 2: label = 'C. '; break;
+                                case 3: label = 'D. '; break;
+                            }
+                            let cssClass = '';
+                            if (isViewResult == 1) {
+                                // Đáp án đúng: option có id == correct
+                                let correctIdx = ques.options.findIndex(o => String(o.id) === String(ques.correct));
+                                let correctContext = correctIdx !== -1 ? ques.options[correctIdx].context : '';
+                                // Nếu user chưa chọn hoặc null/rỗng
+                                if (!ques.userAnswer || ques.userAnswer === null || ques.userAnswer === undefined || ques.userAnswer === '') {
+                                    if (ind === correctIdx) cssClass = 'option-correct-empty';
+                                } else if (opt.context === ques.userAnswer) {
+                                    // User chọn đúng
+                                    if (opt.context === correctContext) cssClass = 'option-correct';
+                                    else cssClass = 'option-user';
+                                } else {
+                                    // User chọn sai
+                                    if (opt.context === ques.userAnswer) cssClass = 'option-user';
+                                    if (ind === correctIdx) cssClass = 'option-correct';
+                                }
+                            }
+                            questionList += `<li class='${cssClass.trim()}'>${label}${opt.context}</li>`;
+                        });
+                        questionList += `</ul>`;
+                        questionList += `</div>`;
+                    });
+                }
+                let listQuestion = document.getElementById('list-question');
+                listQuestion.innerHTML = questionList;
+            }
+
+            // Hàm khởi động: gọi API, show/hide loading, render giao diện
+            async function initExamView() {
+                document.getElementById('modalLoading').style.display = 'flex';
+                document.getElementById('exam-content').style.display = 'none';
+                let questionss = [];
+                if (isViewResult == 1) {
+                    let examId = localStorage.getItem('examId') || '';
+                    let subjectId = localStorage.getItem('subject') || '';
+                    let resultId = localStorage.getItem('resultId') || '';
+                    const url = `${ggApiUrl}?action=getExamWithAnswer&examId=${encodeURIComponent(examId)}&subject=${encodeURIComponent(subjectId)}&resultId=${encodeURIComponent(resultId)}`;
+                    try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        let newQuestions = generatedOptions(data.list);
+                        let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
+
+                        questionss = generatedQuestions || [];
+                        localStorage.setItem('questions', JSON.stringify(questionss));
+                        renderExam(questionss);
+                        // Hiển thị điểm nếu có
+                        if (typeof data.point !== 'undefined') {
+                            document.getElementById('studentPoint').textContent = data.point;
+                            document.getElementById('pointView').style.display = 'block';
+                        }
+                    } catch (err) {
+                        questionss = [];
+                    }
+                } else if (isViewResult == 0) {
+                    questionss = JSON.parse(localStorage.getItem('questions')) || [];
+                    renderExam(questionss);
+                    document.getElementById('pointView').style.display = 'none';
+                }
+                document.getElementById('modalLoading').style.display = 'none';
+                document.getElementById('exam-content').style.display = 'block';
+            }
+
+            window.addEventListener('DOMContentLoaded', initExamView);
 
             function downloadPDF() {
                 const element = document.getElementById('exam-content');
+                let fileName = '';
+                if (isViewResult == 1) {
+                    fileName = localStorage.getItem('examName') + ' - ' + localStorage.getItem('studentName') + '.pdf';
+                } else {
+                    fileName = localStorage.getItem('examName') + '.pdf';
+                }
                 const opt = {
                     margin: 0.5,
-                    filename: 'de-thi.pdf',
+                    filename: fileName,
                     image: { 
                         type: 'jpeg', 
                         quality: 0.98 
