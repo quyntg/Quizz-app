@@ -353,7 +353,10 @@
         <label>Khối</label>
         <input id="grade"></input>
         <label>Media (nếu có)</label>
-        <input type="text" id="media">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="media" style="flex:1;">
+                    <button type="button" id="btnViewImage" style="padding: 8px 14px; background: #2c7be5; color: #fff; border-radius: 6px; border: none; cursor: pointer;">Xem ảnh</button>
+                </div>
         <label>Đáp án A</label>
         <input type="text" id="A">
         <label>Đáp án B</label>
@@ -401,8 +404,67 @@
             <button class="close-button" onclick="closeCopyLinkModal()">OK</button>
         </div>
     </div>
+    <div class="modal-overlay" id="imageModal" style="display:none;">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-title">Xem ảnh</div>
+            <div class="modal-content" id="imageModalContent" style="padding:0;"></div>
+            <button class="close-button" onclick="closeImageModal()">Đóng</button>
+        </div>
+    </div>
     <script>
         // Hiển thị chào + tên tài khoản ở góc phải trên giống info/create
+        // Modal xem ảnh
+        document.getElementById('btnViewImage').onclick = function() {
+            var url = document.getElementById('media').value.trim();
+            var modal = document.getElementById('imageModal');
+            var content = document.getElementById('imageModalContent');
+            function isValidUrl(str) {
+                try {
+                    new URL(str);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+            function isDriveLinkOrId(str) {
+                return (/drive\.google\.com/.test(str) || /^[a-zA-Z0-9_-]{25,}$/.test(str));
+            }
+            if (!url) {
+                content.innerHTML = '<span style="color:#d63031;">Không có link ảnh!</span>';
+                modal.style.display = 'flex';
+                return;
+            }
+            if (isDriveLinkOrId(url)) {
+                // Gọi API Apps Script để lấy link ảnh Drive
+                fetch(ggApiUrl + '?action=viewDriveImage&urlOrId=' + encodeURIComponent(url))
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.imgUrl) {
+                            content.innerHTML = `<img src="${data.imgUrl}" alt="Drive Image" style="max-width:100%;max-height:400px;border-radius:8px;box-shadow:0 2px 8px rgba(44,123,229,0.12);" />`;
+                        } else {
+                            content.innerHTML = '<span style="color:#d63031;">Không tìm thấy ảnh hợp lệ từ Drive!</span>';
+                        }
+                        modal.style.display = 'flex';
+                    })
+                    .catch(() => {
+                        content.innerHTML = '<span style="color:#d63031;">Lỗi khi truy xuất ảnh từ Drive!</span>';
+                        modal.style.display = 'flex';
+                    });
+                return;
+            }
+            if (!isValidUrl(url)) {
+                content.innerHTML = '<span style="color:#d63031;">Định dạng URL không hợp lệ!</span>';
+            } else {
+                content.innerHTML = `<img src="${url}" alt="Media" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(44,123,229,0.12);" />`;
+            }
+            modal.style.display = 'flex';
+        };
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.getElementById('imageModalContent').innerHTML = '';
+        }
+
         function showGreeting() {
             const user = JSON.parse(localStorage.getItem('user')) || {};
             const teacherName = user.name || localStorage.getItem('teacherName') || '';
@@ -413,6 +475,7 @@
                 document.getElementById('user-greeting').style.display = 'none';
             }
         }
+
         document.addEventListener('DOMContentLoaded', function() {
             showGreeting();
             document.getElementById('user-greeting').addEventListener('click', function(e) {
@@ -420,6 +483,7 @@
                 const menu = document.getElementById('greetingMenu');
                 menu.classList.remove('hidden');
             });
+
             document.addEventListener('click', function(e) {
                 const menu = document.getElementById('greetingMenu');
                 if (!menu.classList.contains('hidden')) {
@@ -427,10 +491,12 @@
                 }
             });
         });
+
         function backToLogin() {
             localStorage.setItem('isLoggedIn', 0);
             window.location.href = 'login.html';
         }
+
         function viewDraftToPrint() {
             localStorage.setItem('isViewResult', 0);
             document.getElementById('draftFrame').src = 'form.html';
@@ -627,17 +693,21 @@
         function disableAllButtons() {
             document.querySelectorAll('button').forEach(btn => btn.disabled = true);
         }
+
         function enableAllButtons() {
             document.querySelectorAll('button').forEach(btn => btn.disabled = false);
         }
+
         function showResultModal(title, content) {
             document.getElementById('resultTitle').innerText = title;
             document.getElementById('resultContent').innerHTML = content;
             document.getElementById('resultModal').style.display = 'flex';
         }
+
         function closeResultModal() {
             document.getElementById('resultModal').style.display = 'none';
         }
+
         function saveExam() {
             const btn = document.getElementById('btnSaveExam');
             const icon = document.getElementById('iconSaveExam');
@@ -711,13 +781,25 @@
                 showCopyLinkModal('Không thể copy link. Link:<br><span style="word-break:break-all;color:#d63031;font-weight:500;">' + link + '</span>');
             });
         }
+        
         function showCopyLinkModal(content) {
             document.getElementById('copyLinkContent').innerHTML = content;
             document.getElementById('copyLinkModal').style.display = 'flex';
         }
+
         function closeCopyLinkModal() {
             document.getElementById('copyLinkModal').style.display = 'none';
         }
+
+        function disableAllFields() {
+            var editor = document.getElementById('editor');
+            if (!editor) return;
+            var fields = editor.querySelectorAll('input, select, textarea');
+            fields.forEach(function(field) {
+                field.disabled = true;
+            });
+        }
+        disableAllFields();
     </script>
 </body>
 </html>

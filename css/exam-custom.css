@@ -1,0 +1,47 @@
+/* Chia giao diện câu hỏi + đáp án 50%, còn lại là ảnh */
+.exam-flex {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  height: 100%;
+}
+.exam-left {
+  flex: 1 1 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.exam-right {
+  flex: 1 1 50%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(44,123,229,0.08);
+}
+.exam-img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(44,123,229,0.12);
+}
+@media (max-width: 900px) {
+  .exam-flex {
+    flex-direction: column;
+  }
+  .exam-right {
+    order: 1;
+    width: 100%;
+  }
+  .exam-left {
+    order: 2;
+    width: 100%;
+  }
+  .exam-img {
+    max-height: 200px;
+  }
+}
