@@ -418,42 +418,8 @@
             var url = document.getElementById('media').value.trim();
             var modal = document.getElementById('imageModal');
             var content = document.getElementById('imageModalContent');
-            function isValidUrl(str) {
-                try {
-                    new URL(str);
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            }
-            function isDriveLinkOrId(str) {
-                return (/drive\.google\.com/.test(str) || /^[a-zA-Z0-9_-]{25,}$/.test(str));
-            }
             if (!url) {
                 content.innerHTML = '<span style="color:#d63031;">Không có link ảnh!</span>';
-                modal.style.display = 'flex';
-                return;
-            }
-            if (isDriveLinkOrId(url)) {
-                // Gọi API Apps Script để lấy link ảnh Drive
-                fetch(ggApiUrl + '?action=viewDriveImage&urlOrId=' + encodeURIComponent(url))
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success && data.imgUrl) {
-                            content.innerHTML = `<img src="${data.imgUrl}" alt="Drive Image" style="max-width:100%;max-height:400px;border-radius:8px;box-shadow:0 2px 8px rgba(44,123,229,0.12);" />`;
-                        } else {
-                            content.innerHTML = '<span style="color:#d63031;">Không tìm thấy ảnh hợp lệ từ Drive!</span>';
-                        }
-                        modal.style.display = 'flex';
-                    })
-                    .catch(() => {
-                        content.innerHTML = '<span style="color:#d63031;">Lỗi khi truy xuất ảnh từ Drive!</span>';
-                        modal.style.display = 'flex';
-                    });
-                return;
-            }
-            if (!isValidUrl(url)) {
-                content.innerHTML = '<span style="color:#d63031;">Định dạng URL không hợp lệ!</span>';
             } else {
                 content.innerHTML = `<img src="${url}" alt="Media" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(44,123,229,0.12);" />`;
             }

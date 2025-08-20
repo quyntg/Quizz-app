@@ -298,6 +298,21 @@ function showQuestion(idx) {
 		document.getElementById('viewOptions').appendChild(desc);
 	}
 
+	// Hiển thị ảnh nếu có
+	var examImg = document.getElementById('examImage');
+	var examRight = document.querySelector('.exam-right');
+	var examLeft = document.querySelector('.exam-left');
+	if (q.media) {
+		examImg.src = q.media;
+		examImg.style.display = '';
+		if (examRight) examRight.style.display = '';
+		if (examLeft) examLeft.style.flex = '1 1 50%';
+	} else {
+		examImg.src = '';
+		examImg.style.display = 'none';
+		if (examRight) examRight.style.display = 'none';
+		if (examLeft) examLeft.style.flex = '1 1 100%';
+	}
 	// document.getElementById('viewCorrect').innerText = q.correct;
 	highlightNav(idx);
 	updateAnsweredNav(); // ← cập nhật trạng thái nav
