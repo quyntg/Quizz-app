@@ -1006,86 +1006,107 @@ let questions = [
 let subjects = [
     {
 		"value": "all",
-		"text": "Tổng hợp"
+		"text": "Tổng hợp",
+        "id": "A"
 	},
     {
 		"value": "math",
-		"text": "Toán học"
+		"text": "Toán học",
+        "id": "M"
 	},
 	{
 		"value": "vietnamese",
-		"text": "Tiếng Việt"
+		"text": "Tiếng Việt",
+        "id": "V"
 	},
 	{
 		"value": "literature",
-		"text": "Ngữ văn"
+		"text": "Ngữ văn",
+        "id": "L"
 	},
 	{
 		"value": "physics",
-		"text": "Vật lý"
+		"text": "Vật lý",
+        "id": "P"
 	},
 	{
 		"value": "chemistry",
-		"text": "Hóa học"
+		"text": "Hóa học",
+        "id": "C"
 	},
 	{
 		"value": "biology",
-		"text": "Sinh học"
+		"text": "Sinh học",
+        "id": "B"
 	},
 	{
 		"value": "history",
-		"text": "Lịch sử"
+		"text": "Lịch sử",
+        "id": "H"
 	},
 	{
 		"value": "geography",
-		"text": "Địa lý"
+		"text": "Địa lý",
+        "id": "G"
 	},
 	{
 		"value": "civic_education",
-		"text": "Giáo dục công dân"
+		"text": "Giáo dục công dân",
+        "id": "CIV"
 	},
 	{
 		"value": "english",
-		"text": "Tiếng Anh"
+		"text": "Tiếng Anh",
+        "id": "E"
 	},
 	{
 		"value": "technology",
-		"text": "Công nghệ"
+		"text": "Công nghệ",
+        "id": "T"
 	},
 	{
 		"value": "informatics",
-		"text": "Tin học"
+		"text": "Tin học",
+        "id": "I"
 	},
 	{
 		"value": "physical_education",
-		"text": "Thể dục"
+		"text": "Thể dục",
+        "id": "PE"
 	},
 	{
 		"value": "national_defense",
-		"text": "Giáo dục quốc phòng và an ninh"
+		"text": "Giáo dục quốc phòng và an ninh",
+        "id": "ND"
 	},
 	{
 		"value": "art",
-		"text": "Nghệ thuật"
+		"text": "Nghệ thuật",
+        "id": "A"
 	},
 	{
 		"value": "moral_education",
-		"text": "Đạo đức"
+		"text": "Đạo đức",
+        "id": "MOR"
 	},
 	{
 		"value": "science",
-		"text": "Khoa học"
+		"text": "Khoa học",
+        "id": "S"
 	},
 	{
 		"value": "local_education",
-		"text": "Giáo dục địa phương"
+		"text": "Giáo dục địa phương",
+        "id": "LE"
 	},
 	{
 		"value": "experiential_activities",
-		"text": "Hoạt động trải nghiệm"
+		"text": "Hoạt động trải nghiệm",
+        "id": "EA"
 	},
 	{
 		"value": "career_orientation",
-		"text": "Hướng nghiệp"
+		"text": "Hướng nghiệp",
+        "id": "CO"
 	}
 ]

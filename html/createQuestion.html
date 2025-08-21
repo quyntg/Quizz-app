@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo câu hỏi mới</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../data/data.js"></script>
+    <script src="../js/script.js"></script>
+    <style>
+        .required-star {
+            color: #e74c3c;
+            margin-left: 3px;
+            font-size: 1.08em;
+            font-weight: bold;
+        }
+        body {
+            background: linear-gradient(120deg, #e3f0ff 0%, #f8fafd 100%);
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 32px auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(44,123,229,0.13);
+            padding: 40px 28px 32px 28px;
+            height: auto;
+            display: block;
+        }
+        h2 {
+            text-align: center;
+            color: #2c7be5;
+            margin-bottom: 32px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .form-group {
+            margin-bottom: 22px;
+        }
+        label {
+            font-weight: 600;
+            color: #1a5fb4;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.08rem;
+        }
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #cfd8dc;
+            font-size: 1.08rem;
+            background: #f8fafd;
+            margin-bottom: 4px;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            border: 1.5px solid #2c7be5;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+        input[type="file"] {
+            padding: 8px 0;
+            background: #f8fafd;
+            border-radius: 10px;
+            border: none;
+            font-size: 1rem;
+        }
+        .answer-row {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .answer-label {
+            min-width: 32px;
+            font-weight: 600;
+            color: #2c7be5;
+            font-size: 1.08rem;
+        }
+        .radio-group {
+            display: flex;
+            gap: 22px;
+            margin: 10px 0;
+        }
+        .radio-group label {
+            font-weight: 500;
+            color: #222;
+            font-size: 1rem;
+        }
+        .difficulty-group {
+            margin-bottom: 22px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+        button {
+            background: linear-gradient(90deg, #2c7be5 60%, #1a5fb4 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-size: 1.12rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(44,123,229,0.10);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #1a5fb4 60%, #2c7be5 100%);
+            box-shadow: 0 4px 16px rgba(44,123,229,0.18);
+        }
+        #questionList {
+            margin-top: 36px;
+            background: #f8fafd;
+            border-radius: 10px;
+            padding: 18px 12px;
+            box-shadow: 0 2px 8px rgba(44,123,229,0.06);
+        }
+        /* Modal styles */
+        #resultModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(44, 123, 229, 0.18);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        #resultModal > div {
+            background: #fff;
+            padding: 32px 38px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(44, 123, 229, 0.18);
+            font-size: 1.15rem;
+            color: #2c7be5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            max-width: 90vw;
+        }
+        #resultModal button {
+            background: #2c7be5;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .modern-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #2c7be5;
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            animation: modern-spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes modern-spin {
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100vw;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 18px 4px 12px 4px;
+            }
+            button {
+                padding: 12px 12px;
+                font-size: 1rem;
+            }
+            .answer-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+            #questionForm {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="questionForm">
+            <h2>Tạo câu hỏi mới</h2>
+            <div class="form-group">
+                <label for="questionContent">Nội dung câu hỏi <span class="required-star">*</span></label>
+                <textarea id="questionContent" name="questionContent" required></textarea>
+            </div>
+            <div class="form-group">
+            <label for="subject">Môn học <span class="required-star">*</span></label>
+                <select id="subject" name="subject" required>
+                    <option value="">Chọn môn học</option>
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="grade">Khối/Lớp <span class="required-star">*</span></label>
+                <select id="grade" name="grade" required>
+                    <option value="">Chọn khối/lớp</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+            <div class="form-group">
+            <label for="mediaType">Loại media</label>
+                <select id="mediaType" name="mediaType">
+                    <option value="">Không sử dụng media</option>
+                    <option value="image">Hình ảnh</option>
+                    <option value="audio">Âm thanh</option>
+                    <option value="video">Video</option>
+                </select>
+            </div>
+            <div class="form-group" id="mediaInputGroup" style="display:none;">
+            <label id="mediaLabel"></label>
+                <input type="file" id="mediaFile" style="display:none;">
+                <button type="button" id="uploadBtn" style="display:none; margin-bottom:8px;">Upload</button>
+                <input type="text" id="mediaLink" name="mediaLink" placeholder="Link media" style="display:none;">
+            </div>
+            <div class="form-group">
+                <div class="answer-row">
+                    <span class="answer-label">A <span class="required-star">*</span></span>
+                    <input type="text" name="answerA" id="answerA" placeholder="Đáp án A" required>
+                </div>
+                <div class="answer-row">
+                    <span class="answer-label">B <span class="required-star">*</span></span>
+                    <input type="text" name="answerB" id="answerB" placeholder="Đáp án B" required>
+                </div>
+                <div class="answer-row">
+                    <span class="answer-label">C <span class="required-star">*</span></span>
+                    <input type="text" name="answerC" id="answerC" placeholder="Đáp án C" required>
+                </div>
+                <div class="answer-row">
+                    <span class="answer-label">D <span class="required-star">*</span></span>
+                    <input type="text" name="answerD" id="answerD" placeholder="Đáp án D" required>
+                </div>
+            </div>
+            <div class="form-group">
+            <label for="correctId">Đáp án đúng <span class="required-star">*</span></label>
+                <select id="correctId" name="correctId" required>
+                    <option value="">Chọn đáp án</option>
+                    <option value="1">A</option>
+                    <option value="2">B</option>
+                    <option value="3">C</option>
+                    <option value="4">D</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">Giải thích</label>
+                <textarea id="description" name="description" placeholder="Giải thích cho câu hỏi (nếu có)"></textarea>
+            </div>
+            <div class="form-group difficulty-group">
+            <label for="difficulty">Độ khó <span class="required-star">*</span></label>
+                <select id="difficulty" name="difficulty" required>
+                    <option value="">Chọn độ khó</option>
+                    <option value="dễ">Dễ</option>
+                    <option value="trung bình">Trung bình</option>
+                    <option value="khó">Khó</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button type="submit" id="submitBtn">
+                    <span class="modern-spinner" id="submitSpinner" style="display:none;"></span>
+                    Lưu câu hỏi
+                </button>
+                <button type="button" onclick="resetForm()">Thêm mới</button>
+            </div>
+        </form>
+        <div id="questionList" style="margin-top:32px;"></div>
+    </div>
+    <!-- Modal thông báo kết quả -->
+    <div id="resultModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(44,123,229,0.18); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:32px 38px; border-radius:12px; box-shadow:0 2px 12px rgba(44,123,229,0.18); font-size:1.15rem; color:#2c7be5; display:flex; flex-direction:column; align-items:center; gap:16px; max-width:90vw;">
+            <span id="resultModalMsg"></span>
+            <button onclick="closeResultModal()" style="background:#2c7be5; color:#fff; border:none; border-radius:6px; padding:10px 20px; font-size:1rem; cursor:pointer; margin-top:12px;">Đóng</button>
+        </div>
+    </div>
+    <script>
+        const subjectSelect = document.getElementById('subject');
+        if (subjectSelect && subjectSelect.options.length <= 1) {
+            subjects.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub.value;
+                opt.textContent = sub.text;
+                subjectSelect.appendChild(opt);
+            });
+        }
+        // Xử lý động trường media
+        const mediaType = document.getElementById('mediaType');
+        const mediaInputGroup = document.getElementById('mediaInputGroup');
+        const mediaLabel = document.getElementById('mediaLabel');
+        const mediaFile = document.getElementById('mediaFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const mediaLink = document.getElementById('mediaLink');
+
+        mediaType.addEventListener('change', function() {
+            if (mediaType.value === 'video') {
+                mediaInputGroup.style.display = 'block';
+                mediaLabel.textContent = 'Dán link video (Youtube, Vimeo...)';
+                mediaFile.style.display = 'none';
+                uploadBtn.style.display = 'none';
+                mediaLink.style.display = 'block';
+                mediaLink.value = '';
+                mediaLink.placeholder = 'Dán link video...';
+            } else if (mediaType.value === 'image' || mediaType.value === 'audio') {
+                mediaInputGroup.style.display = 'block';
+                mediaLabel.textContent = mediaType.value === 'image' ? 'Upload hình ảnh' : 'Upload âm thanh';
+                mediaFile.style.display = 'block';
+                uploadBtn.style.display = 'inline-block';
+                mediaLink.style.display = 'block';
+                mediaLink.value = '';
+                mediaLink.placeholder = 'Link sau khi upload...';
+                mediaFile.accept = mediaType.value === 'image' ? 'image/*' : 'audio/*';
+            } else {
+                mediaInputGroup.style.display = 'none';
+                mediaLabel.textContent = '';
+                mediaFile.style.display = 'none';
+                uploadBtn.style.display = 'none';
+                mediaLink.style.display = 'none';
+                mediaLink.value = '';
+            }
+        });
+
+        // Xử lý upload file (demo: chỉ gen link local, thực tế cần upload lên server)
+        uploadBtn.addEventListener('click', function() {
+            if (!mediaFile.files[0]) {
+                alert('Vui lòng chọn file trước!');
+                return;
+            }
+            // Demo: gen link local
+            const file = mediaFile.files[0];
+            const url = URL.createObjectURL(file);
+            mediaLink.value = url;
+            alert('Đã tạo link media tạm thời!');
+        });
+
+        // Hiện modal kết quả
+        function showResultModal(msg) {
+            document.getElementById('resultModalMsg').textContent = msg;
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        // Đóng modal kết quả
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // Xử lý submit form
+        document.getElementById('questionForm').onsubmit = async function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitSpinner = document.getElementById('submitSpinner');
+            // Kiểm tra required cho mediaLink nếu có chọn loại media
+            const mediaType = document.getElementById('mediaType');
+            const mediaLink = document.getElementById('mediaLink');
+            if (mediaType.value && mediaType.value !== '') {
+                if (!mediaLink.value || mediaLink.value.trim() === '') {
+                    mediaLink.focus();
+                    showResultModal('Vui lòng nhập hoặc upload link media!');
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitSpinner.style.display = 'inline-block';
+            // Lấy dữ liệu từ form
+            let correct = "";
+            let correctId = document.getElementById('correctId').value;
+            if (correctId == 1) {
+                correct = document.getElementById('answerA').value;
+            } else if (correctId == 2) {
+                correct = document.getElementById('answerB').value;
+            } else if (correctId == 3) {
+                correct = document.getElementById('answerC').value;
+            } else if (correctId == 4) {
+                correct = document.getElementById('answerD').value;
+            }
+
+            const data = {
+                type: 'nhaplieu',
+                question: document.getElementById('questionContent').value,
+                subject: document.getElementById('subject').value,
+                grade: document.getElementById('grade').value,
+                media: mediaLink.value,
+                A: document.getElementById('answerA').value,
+                B: document.getElementById('answerB').value,
+                C: document.getElementById('answerC').value,
+                D: document.getElementById('answerD').value,
+                correct: correct,
+                correctId: correctId,
+                description: document.getElementById('description').value,
+                difficulty: document.getElementById('difficulty').value
+            };
+            // Nếu có type thì truyền vào, ví dụ lấy từ mediaType
+            if (mediaType.value) {
+                data.type = mediaType.value;
+            }
+            // Gọi API saveQuestion
+            try {
+                const apiUrl = typeof ggApiUrl !== 'undefined' ? ggApiUrl : 'YOUR_API_URL_HERE';
+                const params = new URLSearchParams({ action: 'saveQuestion', ...data });
+                const response = await fetch(apiUrl + '?' + params.toString(), {
+                    method: 'POST',
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showResultModal(result.message || 'Lưu câu hỏi thành công!');
+                    resetForm();
+                } else {
+                    showResultModal(result.message || 'Lưu câu hỏi thất bại!');
+                }
+            } catch (err) {
+                showResultModal('Lỗi khi lưu câu hỏi!');
+            }
+            submitBtn.disabled = false;
+            submitSpinner.style.display = 'none';
+        };
+        function resetForm() {
+            document.getElementById('questionForm').reset();
+            mediaInputGroup.style.display = 'none';
+            mediaLabel.textContent = '';
+            mediaFile.style.display = 'none';
+            uploadBtn.style.display = 'none';
+            mediaLink.style.display = 'none';
+            mediaLink.value = '';
+        }
+    </script>
+</body>
+</html>

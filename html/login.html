@@ -286,7 +286,12 @@
             }
 
             function goToInfo() {
-                window.location.href = "info.html";
+                let user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.note == 'nhaplieu') {
+                    window.location.href = "createQuestion.html";
+                } else {
+                    window.location.href = "info.html";
+                }
             }
             function closeSuccessModal() {
                 document.getElementById('successModal').style.display = 'none';
