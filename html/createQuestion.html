@@ -243,10 +243,15 @@
                 </select>
             </div>
             <div class="form-group" id="mediaInputGroup" style="display:none;">
-            <label id="mediaLabel"></label>
-                <input type="file" id="mediaFile" style="display:none;">
-                <button type="button" id="uploadBtn" style="display:none; margin-bottom:8px;">Upload</button>
-                <input type="text" id="mediaLink" name="mediaLink" placeholder="Link media" style="display:none;">
+                <label id="mediaLabel"></label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="mediaFile" style="display:none;">
+                    <button type="button" id="uploadBtn" style="display:none;">Tải lên</button>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+                    <input type="text" id="mediaLink" name="mediaLink" placeholder="Link media" style="display:none;">
+                    <button type="button" id="previewBtn" style="display:none; background: #2c7be5; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size:0.98rem; cursor:pointer;">Xem trước</button>
+                </div>
             </div>
             <div class="form-group">
                 <div class="answer-row">
@@ -295,6 +300,10 @@
                     Lưu câu hỏi
                 </button>
                 <button type="button" onclick="resetForm()">Thêm mới</button>
+                <button type="button" id="homeBtn">
+                    <span class="modern-spinner" id="homeSpinner" style="display:none;"></span>
+                    Về Trang chủ
+                </button>
             </div>
         </form>
         <div id="questionList" style="margin-top:32px;"></div>
@@ -304,6 +313,13 @@
         <div style="background:#fff; padding:32px 38px; border-radius:12px; box-shadow:0 2px 12px rgba(44,123,229,0.18); font-size:1.15rem; color:#2c7be5; display:flex; flex-direction:column; align-items:center; gap:16px; max-width:90vw;">
             <span id="resultModalMsg"></span>
             <button onclick="closeResultModal()" style="background:#2c7be5; color:#fff; border:none; border-radius:6px; padding:10px 20px; font-size:1rem; cursor:pointer; margin-top:12px;">Đóng</button>
+        </div>
+    </div>
+    <!-- Modal xem trước ảnh -->
+    <div id="previewModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(44,123,229,0.18); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:24px; border-radius:12px; box-shadow:0 2px 12px rgba(44,123,229,0.18); display:flex; flex-direction:column; align-items:center; max-width:90vw;">
+            <div id="previewContent"></div>
+            <button onclick="closePreviewModal()" style="background:#2c7be5; color:#fff; border:none; border-radius:6px; padding:10px 20px; font-size:1rem; cursor:pointer;">Đóng</button>
         </div>
     </div>
     <script>
@@ -323,7 +339,13 @@
         const mediaFile = document.getElementById('mediaFile');
         const uploadBtn = document.getElementById('uploadBtn');
         const mediaLink = document.getElementById('mediaLink');
-
+        const previewBtn = document.getElementById('previewBtn');
+        const previewModal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        function closePreviewModal() {
+            previewModal.style.display = 'none';
+            previewContent.innerHTML = '';
+        }
         mediaType.addEventListener('change', function() {
             if (mediaType.value === 'video') {
                 mediaInputGroup.style.display = 'block';
@@ -333,15 +355,23 @@
                 mediaLink.style.display = 'block';
                 mediaLink.value = '';
                 mediaLink.placeholder = 'Dán link video...';
+                previewBtn.style.display = 'none';
             } else if (mediaType.value === 'image' || mediaType.value === 'audio') {
                 mediaInputGroup.style.display = 'block';
-                mediaLabel.textContent = mediaType.value === 'image' ? 'Upload hình ảnh' : 'Upload âm thanh';
+                mediaLabel.textContent = mediaType.value === 'image' ? 'Tải lên hình ảnh' : 'Tải lên âm thanh';
                 mediaFile.style.display = 'block';
                 uploadBtn.style.display = 'inline-block';
                 mediaLink.style.display = 'block';
                 mediaLink.value = '';
-                mediaLink.placeholder = 'Link sau khi upload...';
-                mediaFile.accept = mediaType.value === 'image' ? 'image/*' : 'audio/*';
+                mediaLink.placeholder = 'Link sau khi tải lên...';
+                mediaFile.value = '';
+                if (mediaType.value === 'image') {
+                    mediaFile.accept = 'image/*';
+                    previewBtn.style.display = 'inline-block';
+                } else {
+                    mediaFile.accept = 'audio/*';
+                    previewBtn.style.display = 'none';
+                }
             } else {
                 mediaInputGroup.style.display = 'none';
                 mediaLabel.textContent = '';
@@ -349,20 +379,87 @@
                 uploadBtn.style.display = 'none';
                 mediaLink.style.display = 'none';
                 mediaLink.value = '';
+                mediaFile.value = '';
+                previewBtn.style.display = 'none';
             }
         });
 
-        // Xử lý upload file (demo: chỉ gen link local, thực tế cần upload lên server)
-        uploadBtn.addEventListener('click', function() {
+        mediaType.addEventListener('change', function() {
+            if ((mediaType.value === 'image' || mediaType.value === 'video') && mediaLink.value.trim() !== '') {
+                previewBtn.style.display = 'inline-block';
+            } else {
+                previewBtn.style.display = 'none';
+            }
+        });
+
+        mediaLink.addEventListener('input', function() {
+            if ((mediaType.value === 'image' || mediaType.value === 'video') && mediaLink.value.trim() !== '') {
+                previewBtn.style.display = 'inline-block';
+            } else {
+                previewBtn.style.display = 'none';
+            }
+        });
+
+        previewBtn.onclick = function() {
+            const url = mediaLink.value.trim();
+            if (!url) return;
+            if (mediaType.value === 'image') {
+                previewContent.innerHTML = `<img src="${url}" alt="Preview" style="max-width:80vw; max-height:70vh; border-radius:8px; margin-bottom:18px;" />`;
+            } else if (mediaType.value === 'video') {
+                // Chỉ cho xem trước nếu là link YouTube
+                const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
+                if (!ytMatch) {
+                    showResultModal('Chỉ chấp nhận link YouTube!');
+                    return;
+                }
+                const embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                previewContent.innerHTML = `<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen style="max-width:80vw; max-height:70vh; border-radius:8px; margin-bottom:18px;"></iframe>`;
+            }
+            previewModal.style.display = 'flex';
+        }
+
+        // Hàm Tải lên lên Cloudinary
+        async function uploadToCloudinary(file, type) {
+            const url = 'https://api.cloudinary.com/v1_1/ddzkqkups/' + (type === 'image' ? 'image' : 'audio') + '/upload';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'aquiz-app'); // Thay bằng upload_preset của bạn
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.secure_url) {
+                    return data.secure_url;
+                } else {
+                    throw new Error('Tải lên thất bại');
+                }
+            } catch (err) {
+                return null;
+            }
+        }
+
+        // Xử lý Tải lên file (demo: chỉ gen link local, thực tế cần Tải lên lên server)
+        uploadBtn.addEventListener('click', async function() {
             if (!mediaFile.files[0]) {
-                alert('Vui lòng chọn file trước!');
+                showResultModal('Vui lòng chọn file trước!');
                 return;
             }
-            // Demo: gen link local
             const file = mediaFile.files[0];
-            const url = URL.createObjectURL(file);
-            mediaLink.value = url;
-            alert('Đã tạo link media tạm thời!');
+            const type = mediaType.value;
+            mediaLink.value = '';
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="modern-spinner" style="display:inline-block;"></span> Đang tải lên...';
+            const url = await uploadToCloudinary(file, type);
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = 'Tải lên';
+            if (url) {
+                mediaLink.value = url;
+                showResultModal('Tải lên thành công!');
+            } else {
+                showResultModal('Tải lên thất bại!');
+            }
         });
 
         // Hiện modal kết quả
@@ -389,6 +486,16 @@
                     showResultModal('Vui lòng nhập hoặc upload link media!');
                     e.preventDefault();
                     return false;
+                }
+                // Ràng buộc link YouTube cho video
+                if (mediaType.value === 'video') {
+                    const ytPattern = /^(https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11})/;
+                    if (!ytPattern.test(mediaLink.value.trim())) {
+                        mediaLink.focus();
+                        showResultModal('Chỉ chấp nhận link YouTube!');
+                        e.preventDefault();
+                        return false;
+                    }
                 }
             }
             e.preventDefault();
@@ -446,6 +553,15 @@
             submitBtn.disabled = false;
             submitSpinner.style.display = 'none';
         };
+        document.getElementById('homeBtn').onclick = function() {
+    const homeBtn = document.getElementById('homeBtn');
+    const homeSpinner = document.getElementById('homeSpinner');
+    homeBtn.disabled = true;
+    homeSpinner.style.display = 'inline-block';
+    setTimeout(function() {
+        window.location.href = 'login.html';
+    }, 600);
+};
         function resetForm() {
             document.getElementById('questionForm').reset();
             mediaInputGroup.style.display = 'none';
