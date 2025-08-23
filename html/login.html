@@ -257,7 +257,6 @@
                         }
                     })
                     .catch((err) => {
-                        console.error("❌ Lỗi khi gọi API:", err);
                         loginBtn.disabled = false;
                         loginBtn.innerHTML = 'Đăng nhập';
                         errorEl.textContent = "Không thể kết nối máy chủ.";

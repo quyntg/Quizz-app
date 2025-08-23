@@ -104,22 +104,23 @@
             align-items: center;
         }
         .exam-title {
-            font-weight: bold;
-            font-size: 20px;
-            color: #2c7be5;
-        }
-        .exam-meta {
-            width: 100%;
-            word-break: break-word;
+            box-shadow: 0 1px 4px rgba(44,123,229,0.06);
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            align-items: center;
         }
         .exam-btn-group-side {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: stretch;
-            gap: 12px;
-            padding-right: 4px;
-            position: static;
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+            padding-right: 0;
         }
         .exam-link-btn:hover {
             background: #1a5fb4;
@@ -157,7 +158,7 @@
             background: #1a5fb4;
         }
         .exam-enter-btn {
-            position: absolute;
+            position: relative;
             padding: 5px 10px;
             font-size: 0.95rem;
             border-radius: 6px;
@@ -186,7 +187,6 @@
             align-items: center;
             gap: 12px;
             margin-left: 0;
-            margin-top: 40px;
         }
         .exam-link-btn:hover {
             background: #2c7be5;
@@ -254,34 +254,40 @@
             100% { transform: rotate(360deg); }
         }
         @media (max-width: 600px) {
-            .form-container {
-                max-width: 100vw;
-                margin: 0;
-                border-radius: 0;
-                box-shadow: none;
-                padding: 40px 8px 12px 8px;
-            }
-            .create-btn {
-                font-size: 1rem;
-                padding: 12px 0;
-            }
-            .info-group {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 2px;
-            }
-            .info-label {
-                min-width: unset;
-                font-size: 1rem;
-            }
-            .info-value {
-                font-size: 1rem;
-            }
             .exam-item {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 10px;
                 padding: 12px 8px;
+                position: relative;
+            }
+            .exam-btn-group-side {
+                position: absolute;
+                top: auto;
+                bottom: 12px;
+                right: 12px;
+                left: auto;
+                transform: none;
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+                width: auto;
+                margin-top: 0;
+                justify-content: flex-end;
+                flex-wrap: nowrap;
+            }
+            .exam-enter-btn, .exam-link-btn, .exam-result-btn {
+                flex: 1;
+                width: auto;
+                padding: 10px 0;
+                font-size: 1rem;
+                margin: 0;
+                border-radius: 8px;
+                margin-top: 0;
+                position: static;
+                transform: none;
+                min-width: unset !important;
             }
             .exam-btn-group-side {
                 width: 100%;
@@ -299,7 +305,7 @@
                 width: auto;
                 padding: 10px 0;
                 font-size: 1rem;
-                margin: 0;
+                margin: 0 !important;
                 border-radius: 8px;
                 margin-top: 0;
                 position: static;
@@ -367,7 +373,8 @@
         }
         .exam-enter-btn, .exam-link-btn, .exam-result-btn {
             min-width: 120px;
-            justify-content: center; 
+            justify-content: center;
+            margin: 8px;
         }
     </style>
     <script src="../js/script.js"></script>
@@ -472,7 +479,6 @@
             document.getElementById('loadingModal').style.display = 'flex';
             if (typeof getTeacherById === 'function') {
                 await getTeacherById();
-                console.log('✅ Đã lấy thông tin giáo viên thành công');
             }
             // Ẩn modal loading
             document.getElementById('loadingModal').style.display = 'none';
@@ -529,7 +535,7 @@
                                 <div class='exam-item exam-flex'>
                                     <div style='flex:1;'>
                                         <div class='exam-title'>${exam.name || 'Đề thi không tên'}</div>
-                                        <div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b> | Số câu:<b> ${exam.total || ''}</b><br>Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
+                                        <div class='exam-meta'>Loại đề:<b> ${exam.type || ''} </b><br><div class='exam-meta'>Môn:<b> ${subjectName || ''} </b>| Khối:<b> ${exam.grade || ''} </b> | Số câu:<b> ${exam.total || ''}</b><br>Thời gian:<b> ${exam.time || ''} phút</b> | Ngày tạo:<b> ${exam.createDate || ''}</b></div>
                                     </div>
                                     <div class='exam-btn-group-side'>
                                         <button class='exam-enter-btn' onclick="enterExam(this, '${exam.subject || ''}', '${exam.id || ''}')">
@@ -619,21 +625,26 @@
                 if (data) {
                     localStorage.setItem('examName', data.name || '');
                     localStorage.setItem('examTime', data.time || '');
-                    localStorage.setItem('easyCount', data.easy || 0);
-                    localStorage.setItem('mediumCount', data.medium || 0);
-                    localStorage.setItem('hardCount', data.hard || 0);
+                    localStorage.setItem('examType', data.type || '');
+                    let form = {
+                        quiz: { easy: data.easy || 0, medium: data.medium || 0, hard: data.hard || 0 },
+                        essay: { easy: data.essayEasy || 0, medium: data.essayMedium || 0, hard: data.essayHard || 0 }
+                    };
+                    localStorage.setItem('form', JSON.stringify(form));
                     localStorage.setItem('grade', data.grade || '');
                     localStorage.setItem('school', data.school || '');
+                    localStorage.setItem('type', data.type || '');
                     localStorage.setItem('subject', data.subject || '');
                     localStorage.setItem('totalQuestions', data.total || 0);                  
                     localStorage.setItem('examId', data.id);
 
                     let newQuestions = generatedOptions(data.list || []);
-                    let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
+                    let examType = data.type;
+                    let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, form, examType);
                     localStorage.setItem('questions', JSON.stringify(generatedQuestions));
                     localStorage.setItem('isNewExam', 0);     
                 } else {
-                    console.log('Không thành công!');
+                    
                 }
             })
             .catch(() => {
@@ -668,7 +679,6 @@
                 fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    console.log('Kết quả:', data);
                     if (!data || !data.length) {
                         spinner.style.display = 'none';
                         btn.disabled = false;

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Quiz Creator</title>
+        <title>Aquiz</title>
         <script src="https://apis.google.com/js/platform.js" async defer></script>
         <script src="../data/data.js"></script>
         <script src="../js/script.js"></script>
@@ -144,10 +144,21 @@
         isSubmitted = true;
         document.getElementById('submitQuiz').disabled = true;
         document.getElementById('submitQuiz').disabled = true;
-        submitExam(0);
+        // Nếu isStudentDoing = 0 thì không submit bài thi
+        if (localStorage.getItem('isStudentDoing') != '0') {
+            submitExam(0);
+        } else {            
+            localStorage.setItem('isSubmitted', '0');
+        }
     }
 
     window.onload = () => {
+        // Reset đáp án cũ nếu chưa nộp bài
+        if (!localStorage.getItem('isSubmitted') || localStorage.getItem('isSubmitted') === 'false' || localStorage.getItem('isSubmitted') === '0') {
+            let questions = JSON.parse(localStorage.getItem('questions')) || [];
+            questions.forEach(q => { q.userAnswer = ''; });
+            localStorage.setItem('questions', JSON.stringify(questions));
+        }
         initNav(); // Hiển thị trước nav
         showQuestion(0); // Hiển thị ô đầu
         loadQuestions(); // Lấy dữ liệu

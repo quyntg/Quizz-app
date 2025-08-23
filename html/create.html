@@ -156,6 +156,27 @@
                 margin-top: 8px;
                 border-radius: 8px;
             }
+            #quizGroup, #essayGroup {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            #quizGroup > div, #essayGroup > div {
+                flex-direction: column !important;
+                gap: 8px !important;
+                width: 100%;
+            }
+            #quizGroup input[type="number"], #essayGroup input[type="number"] {
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+                font-size: 1rem;
+                padding: 10px 8px;
+                border-radius: 7px;
+            }
+            #quizGroup label, #essayGroup label {
+                font-size: 0.98rem;
+                margin-bottom: 2px;
+            }
         }
     </style>
     <script src="../data/data.js"></script>
@@ -179,6 +200,15 @@
             <input type="text" id="examName" placeholder="" required />
         </div>
         <div class="form-group">
+            <label for="examType">Loại đề thi:</label>
+            <select id="examType" required>
+                <option value="">Chọn loại đề</option>
+                <option value="quiz">Trắc nghiệm</option>
+                <option value="essay">Tự luận</option>
+                <option value="mix">Trắc nghiệm + Tự luận</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="subject">Môn học:</label>
             <select id="subject" required>
                 <option value="">Chọn môn học</option>
@@ -199,21 +229,45 @@
             <input type="number" id="totalQuestions" min="1" value="10" />
         </div>
         <div class="form-group">
-            <label for="easyCount">Số câu dễ:</label>
-            <input type="number" id="easyCount" min="0" value="4" />
-        </div>
-        <div class="form-group">
-            <label for="mediumCount">Số câu trung bình:</label>
-            <input type="number" id="mediumCount" min="0" value="4" />
-        </div>
-        <div class="form-group">
-            <label for="hardCount">Số câu khó:</label>
-            <input type="number" id="hardCount" min="0" value="2" />
-        </div>
+            <div id="quizGroup">
+                <label><b>Trắc nghiệm</b></label>
+                <div style="display:flex; gap:12px;">
+                    <div style="flex:1;">
+                        <label for="quizEasy">Dễ:</label>
+                        <input type="number" id="quizEasy" min="0" value="4" />
+                    </div>
+                    <div style="flex:1;">
+                        <label for="quizMedium">Trung bình:</label>
+                        <input type="number" id="quizMedium" min="0" value="4" />
+                    </div>
+                    <div style="flex:1;">
+                        <label for="quizHard">Khó:</label>
+                        <input type="number" id="quizHard" min="0" value="2" />
+                    </div>
+                </div>
+            </div>
+            <div id="essayGroup">
+                <label><b>Tự luận</b></label>
+                <div style="display:flex; gap:12px;">
+                    <div style="flex:1;">
+                        <label for="essayEasy">Dễ:</label>
+                        <input type="number" id="essayEasy" min="0" value="4" />
+                    </div>
+                    <div style="flex:1;">
+                        <label for="essayMedium">Trung bình:</label>
+                        <input type="number" id="essayMedium" min="0" value="4" />
+                    </div>
+                    <div style="flex:1;">
+                        <label for="essayHard">Khó:</label>
+                        <input type="number" id="essayHard" min="0" value="2" />
+                    </div>
+                </div>
+            </div>
         <div class="form-group">
             <label for="excelFile">Upload file Excel câu hỏi:</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls" />
         </div>
+        <div id="errorMsg"></div>
         <button id="btnBank" onclick="viewExam(0)">
             <span id="iconBank" style="display:none; vertical-align:middle;">
                 <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f504.svg" width="18" height="18" class="rotating-icon"/>
@@ -228,10 +282,32 @@
         </button>
     </div>
     <script>
+        // Ẩn/hiện input số lượng theo loại đề
+        const examTypeSelect = document.getElementById('examType');
+        const quizGroup = document.getElementById('quizGroup');
+        const essayGroup = document.getElementById('essayGroup');
+        function updateTypeInputs() {
+            if (!examTypeSelect.value) {
+                quizGroup.style.display = 'none';
+                essayGroup.style.display = 'none';
+            } else if (examTypeSelect.value === 'quiz') {
+                quizGroup.style.display = '';
+                essayGroup.style.display = 'none';
+            } else if (examTypeSelect.value === 'essay') {
+                quizGroup.style.display = 'none';
+                essayGroup.style.display = '';
+            } else {
+                quizGroup.style.display = '';
+                essayGroup.style.display = '';
+            }
+        }
+        examTypeSelect.addEventListener('change', updateTypeInputs);
+        updateTypeInputs();
         let user = JSON.parse(localStorage.getItem('user')) || {};
         document.getElementById('teacherName').value = user.name || '';
         localStorage.setItem('teacherName', user.name || '');
         localStorage.setItem('school', user.school || '');
+        localStorage.setItem('isStudent', 0);
 
         // Tạo option cho select môn học từ mảng subjects
         const subjectSelect = document.getElementById('subject');
@@ -268,13 +344,32 @@
         async function viewExam(type) {
             const name = document.getElementById('teacherName').value;
             const examName = document.getElementById('examName').value;
+            const examType = document.getElementById('examType').value;
             const time = document.getElementById('examTime').value;
             const subject = document.getElementById('subject').value;
             const grade = document.getElementById('grade').value;
             const total = parseInt(document.getElementById('totalQuestions').value);
-            const easy = parseInt(document.getElementById('easyCount').value);
-            const medium = parseInt(document.getElementById('mediumCount').value);
-            const hard = parseInt(document.getElementById('hardCount').value);
+            let quizEasy = 0, quizMedium = 0, quizHard = 0, essayEasy = 0, essayMedium = 0, essayHard = 0;
+            if (examType === 'quiz') {
+                quizEasy = parseInt(document.getElementById('quizEasy').value);
+                quizMedium = parseInt(document.getElementById('quizMedium').value);
+                quizHard = parseInt(document.getElementById('quizHard').value);
+            } else if (examType === 'essay') {
+                essayEasy = parseInt(document.getElementById('essayEasy').value);
+                essayMedium = parseInt(document.getElementById('essayMedium').value);
+                essayHard = parseInt(document.getElementById('essayHard').value);
+            } else {
+                quizEasy = parseInt(document.getElementById('quizEasy').value);
+                quizMedium = parseInt(document.getElementById('quizMedium').value);
+                quizHard = parseInt(document.getElementById('quizHard').value);
+                essayEasy = parseInt(document.getElementById('essayEasy').value);
+                essayMedium = parseInt(document.getElementById('essayMedium').value);
+                essayHard = parseInt(document.getElementById('essayHard').value);
+            }
+            const form = {
+                quiz: { easy: examType === 'quiz' || examType === 'mix' ? quizEasy : 0, medium: examType === 'quiz' || examType === 'mix' ? quizMedium : 0, hard: examType === 'quiz' || examType === 'mix' ? quizHard : 0 },
+                essay: { easy: examType === 'essay' || examType === 'mix' ? essayEasy : 0, medium: examType === 'essay' || examType === 'mix' ? essayMedium : 0, hard: examType === 'essay' || examType === 'mix' ? essayHard : 0 }
+            };
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
             const btnBank = document.getElementById('btnBank');
@@ -290,12 +385,12 @@
 
             try {
                 if (type === 0) {
-                    if (!name || !time || !subject || !grade) {
+                    if (!name || !time || !subject || !grade || !examType) {
                         alert("Vui lòng nhập đầy đủ thông tin.");
                         return;
                     }
                 } else if (type === 1) {
-                    if (!name || !time || !file || !grade) {
+                    if (!name || !time || !file || !grade || !examType) {
                         alert("Vui lòng nhập đầy đủ thông tin.");
                         return;
                     }
@@ -307,7 +402,14 @@
                         return;
                     }
                 }
-                const sum = easy + medium + hard;
+                let sum = 0;
+                if (examType === 'quiz') {
+                    sum = form.quiz.easy + form.quiz.medium + form.quiz.hard;
+                } else if (examType === 'essay') {
+                    sum = form.essay.easy + form.essay.medium + form.essay.hard;
+                } else {
+                    sum = form.quiz.easy + form.quiz.medium + form.quiz.hard + form.essay.easy + form.essay.medium + form.essay.hard;
+                }
                 if (sum > total) {
                     alert(`❌ Tổng số câu từng mức (${sum}) lớn hơn tổng số câu (${total})`);
                     return;
@@ -321,24 +423,42 @@
                 async function getAllQuestions() {
                     try {
                         const total = parseInt(localStorage.getItem('totalQuestions')) || 40;
-                        const easy = parseInt(localStorage.getItem('easyCount')) || 0;
-                        const medium = parseInt(localStorage.getItem('mediumCount')) || 0;
-                        const hard = parseInt(localStorage.getItem('hardCount')) || 0;
                         const subject = localStorage.getItem('subject') || "";
+                        const examType = localStorage.getItem('examType') || "quiz";
+                        const form = JSON.parse(localStorage.getItem('form') || '{}');
+                        // const easy = form[examType]?.easy || 0;
+                        // const medium = form[examType]?.medium || 0;
+                        // const hard = form[examType]?.hard || 0;
                         const response = await fetch(
-                            ggApiUrl + `?action=generateExam&total=${total}&easy=${easy}&medium=${medium}&hard=${hard}&subject=${encodeURIComponent(subject)}`
+                            ggApiUrl + `?action=generateExam&form=${encodeURIComponent(JSON.stringify(form))}&examType=${encodeURIComponent(examType)}&subject=${encodeURIComponent(subject)}`
                         );
                         if (!response.ok) throw new Error("Lỗi HTTP: " + response.status);
                         const questionss = await response.json();
-                        let newQuestions = generatedOptions(questionss);
-                        let generatedQuestions = generateExamFromQuestions(newQuestions, total, easy, medium, hard);
-                        localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
-                        localStorage.setItem('isNewExam', 1);                        
-                        localStorage.setItem('examId', '');
+                        // Hiển thị lỗi phía trên button nếu có
+                        let errorMsg = document.getElementById('errorMsg');
+                        if (questionss.error) {
+                            errorMsg.innerHTML = `<span style='color:#d63031;font-weight:600;'>${questionss.error}</span>`;
+                            return [];
+                        } else {
+                            errorMsg.innerHTML = '';
+                            let newQuestions = generatedOptions(questionss);
+                            let generatedQuestions = generateExamFromQuestions(newQuestions, total, form, examType);
+                            // Phân loại câu hỏi trắc nghiệm và tự luận
+                            const quizQuestions = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+                            const essayQuestions = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'Tự luận');
+                            let finalQuestions = [];
+                            if (examType === 'mix') {
+                                finalQuestions = [...quizQuestions, ...essayQuestions];
+                            } else {
+                                finalQuestions = [...generatedQuestions];
+                            }
+                            localStorage.setItem('questions', JSON.stringify(finalQuestions));
+                            localStorage.setItem('isNewExam', 1);
+                            localStorage.setItem('examId', '');
 
-                        return generatedQuestions;
+                            return generatedQuestions;
+                        }
                     } catch (error) {
-                        console.error("❌ Lỗi khi gọi getAllQuestions():", error);
                         return [];
                     }
                 }
@@ -349,9 +469,8 @@
                 localStorage.setItem('grade', grade);
                 localStorage.setItem('examTime', time);
                 localStorage.setItem('totalQuestions', total);
-                localStorage.setItem('easyCount', easy);
-                localStorage.setItem('mediumCount', medium);
-                localStorage.setItem('hardCount', hard);
+                localStorage.setItem('form', JSON.stringify(form));
+                localStorage.setItem('examType', examType);
                 if (type === 0) {
                     await getAllQuestions();
                 } else if (type === 1) {

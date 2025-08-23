@@ -346,6 +346,8 @@
         <h2 id="editorTitle">Câu hỏi</h2>
         <label>ID</label>
         <input type="text" id="id">
+        <label>Loại câu hỏi</label>
+        <input type="text" id="type">
         <label>Câu hỏi</label>
         <textarea id="question"></textarea>
         <label>Môn học</label>
@@ -357,15 +359,15 @@
                     <input type="text" id="media" style="flex:1;">
                     <button type="button" id="btnViewImage" style="padding: 8px 14px; background: #2c7be5; color: #fff; border-radius: 6px; border: none; cursor: pointer;">Xem ảnh</button>
                 </div>
-        <label>Đáp án A</label>
+        <label for="A">Đáp án A</label>
         <input type="text" id="A">
-        <label>Đáp án B</label>
+        <label for="B">Đáp án B</label>
         <input type="text" id="B">
-        <label>Đáp án C</label>
+        <label for="C">Đáp án C</label>
         <input type="text" id="C">
-        <label>Đáp án D</label>
+        <label for="D">Đáp án D</label>
         <input type="text" id="D">
-        <label>Đáp án đúng (A/B/C/D)</label>
+        <label for="correct">Đáp án đúng (A/B/C/D)</label>
         <select id="correct">
             <option value="">Chọn đáp án</option>
             <option value="A">A</option>
@@ -481,15 +483,16 @@
                 questionsList = data.map(q => {
                     // Nếu correct là context, xác định đúng là A/B/C/D
                     let correct = "";   
-                    if (q.correct == (q.options?.[0]?.id)) correct = "A";
-                    else if (q.correct == (q.options?.[1]?.id)) correct = "B";
-                    else if (q.correct == (q.options?.[2]?.id)) correct = "C";
-                    else if (q.correct == (q.options?.[3]?.id)) correct = "D";
+                    if (q.correctId == (q.options?.[0]?.id)) correct = "A";
+                    else if (q.correctId == (q.options?.[1]?.id)) correct = "B";
+                    else if (q.correctId == (q.options?.[2]?.id)) correct = "C";
+                    else if (q.correctId == (q.options?.[3]?.id)) correct = "D";
                     else correct = ""; // Không khớp đáp án nào
 
                     return {
                         id: q.id,
                         question: q.question,
+                        type: q.type || "",
                         subject: q.subject || "",
                         grade: q.grade || "",
                         media: q.media || "",
@@ -524,6 +527,7 @@
                 id: `Q${questionsList.length + 1}`,
                 question: "",
                 subject: "",
+                type: "",
                 grade: "",
                 media: "",
                 A: "",
@@ -541,29 +545,38 @@
         function selectQuestion(index) {
             currentIndex = index;
             const q = questionsList[index];
-            document.getElementById("id").value = q.id;
-            document.getElementById("question").value = q.question;
-            document.getElementById("subject").value = q.subject;
-            document.getElementById("grade").value = q.grade || localStorage.getItem('grade') || '';
-            document.getElementById("media").value = q.media;
-            document.getElementById("A").value = q.A;
-            document.getElementById("B").value = q.B;
-            document.getElementById("C").value = q.C;
-            document.getElementById("D").value = q.D;
-            // Ưu tiên correctId, nếu có thì chuyển sang A/B/C/D
-            
-            let correctVal = "";
-            if (typeof q.correctId !== 'undefined' && q.correctId !== null && q.correctId !== "") {
-                if (q.correctId == 1) correctVal = "A";
-                else if (q.correctId == 2) correctVal = "B";
-                else if (q.correctId == 3) correctVal = "C";
-                else if (q.correctId == 4) correctVal = "D";
-            } else if (q.correct) {
-                correctVal = q.correct.toString().toUpperCase().trim();
+            document.getElementById('id').value = q.id || '';
+            // Bind dữ liệu trường type theo if else
+            if (q.type) {
+                if (q.type == "quiz") {
+                    document.getElementById('type').value = "Trắc nghiệm";
+                } else if (q.type == "essay") {
+                    document.getElementById('type').value = "Tự luận";
+                }
+            } else {
+                document.getElementById('type').value = '';
             }
-            document.getElementById("correct").value = correctVal;
-            document.getElementById("description").value = q.description;
-            document.getElementById("difficulty").value = q.difficulty;
+
+            document.getElementById('question').value = q.question || '';
+            document.getElementById('subject').value = q.subject || '';
+            document.getElementById('grade').value = q.grade || '';
+            document.getElementById('media').value = q.media || '';
+            document.getElementById('A').value = q.A || '';
+            document.getElementById('B').value = q.B || '';
+            document.getElementById('C').value = q.C || '';
+            document.getElementById('D').value = q.D || '';
+            document.getElementById('correct').value = q.correct || '';
+
+            // Ẩn/hiện các trường đáp án trắc nghiệm nếu là tự luận
+            const isEssay = q.type === 'essay' || document.getElementById('type').value === 'Tự luận';
+            ['A','B','C','D','correct'].forEach(id => {
+                const label = document.querySelector('label[for="' + id + '"]') || document.querySelector('label[for="' + id.toUpperCase() + '"]');
+                const field = document.getElementById(id);
+                if (label) label.style.display = isEssay ? 'none' : '';
+                if (field) field.style.display = isEssay ? 'none' : '';
+            });
+            document.getElementById('description').value = q.description || '';
+            document.getElementById('difficulty').value = q.difficulty || 'easy';
             renderList();
         }
 
@@ -573,6 +586,7 @@
             q.id = document.getElementById("id").value;
             q.question = document.getElementById("question").value;
             q.subject = document.getElementById("subject").value;
+            q.type = document.getElementById("type").value;
             q.grade = document.getElementById("grade").value;
             q.media = document.getElementById("media").value;
             q.A = document.getElementById("A").value;
@@ -590,7 +604,7 @@
             q.difficulty = document.getElementById("difficulty").value;
             renderList();
         }
-        ["id", "question", "subject", "grade", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
+        ["id", "question", "subject", "type", "grade", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
             document.getElementById(id).addEventListener("input", updateCurrent);
         });
 
@@ -607,6 +621,7 @@
                     id: q.id || `Q${index + 1}`,
                     question: q.question,
                     subject: q.subject || "",
+                    type: q.type || "",
                     grade: q.grade || "",
                     media: q.media || "",
                     options: [{
@@ -627,7 +642,6 @@
                     difficulty: q.difficulty
                 };
             });
-            console.log("output---", output);
         }
         // Khởi tạo từ JSON sẵn
         window.onload = () => {				
@@ -640,8 +654,10 @@
                     subjectSelect.appendChild(opt);
                 });
             }
+            // Nếu có examId thì gọi API lấy thông tin đề và cập nhật nút
             loadFromJSON(JSON.parse(localStorage.getItem('questions')));
             let isNewExam = localStorage.getItem('isNewExam');
+            const examId = localStorage.getItem('examId');
             let btnSaveExam = document.getElementById('btnSaveExam');
             let btnStartExam = document.getElementById('btnStartExam');
             let afterSaveBtns = document.getElementById('afterSaveBtns');
@@ -682,12 +698,10 @@
             
             // Tùy chỉnh logic lưu đề thi tại đây
             let user = JSON.parse(localStorage.getItem('user')) || {};
-            let form = {
-                easy: localStorage.getItem('easyCount') || 0,
-                medium: localStorage.getItem('mediumCount') || 0,
-                hard: localStorage.getItem('hardCount') || 0,
-            }
+            let form = JSON.parse(localStorage.getItem('form') || '{}');
+            let type = localStorage.getItem('examType') || '';
             let listQ = '';
+            let examType = '';
             questionsList.forEach(q => {
                 if (listQ == '') {
                     listQ = q.id;
@@ -695,9 +709,17 @@
                     listQ += `,${q.id}`;
                 } 
             });
+            if (type == 'quiz') {
+                examType = 'Trắc nghiệm';
+            } else if (type == 'essay') {
+                examType = 'Tự luận';
+            } else if (type == 'mix') {
+                examType = 'Trắc nghiệm + Tự luận';
+            }
             const examData = {
                 action: 'saveExam',
                 name: localStorage.getItem('examName') || '',
+                type: examType || '',
                 teacherId: user.id || '',
                 school: localStorage.getItem('school') || '',
                 subject: localStorage.getItem('subject') || '',
@@ -719,8 +741,11 @@
                 if (data.success) {
                     showResultModal('Lưu đề thi thành công', 'Đề thi đã được lưu!');
                     localStorage.setItem('isChange', 1);
+                    localStorage.setItem('isNewExam', 0);
+                    localStorage.setItem('examId', data.id || '');
                     const btn = document.getElementById('btnSaveExam');
                     btn.classList.add('btn-disabled');
+                    document.getElementById('afterSaveBtns').style.display = 'flex';
                 } else {
                     showResultModal('Lỗi lưu đề thi', data.message || 'Lưu đề thi thất bại!');
                 }

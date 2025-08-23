@@ -6,71 +6,103 @@ let totalQuestions = 0;
 let totalPages = 0;
 let timerDuration = 0; // 30 phút = 1800 giây
 let timerInterval;
-let isSubmitted = false;
+let isSubmitted = localStorage.getItem('isSubmitted') === 'true';
 let totalTimeSpent = 0; // giây
 let timerStartAt = null;
 
 function startExam() {
 	localStorage.removeItem('studentInfo');
+	localStorage.setItem('isStudentDoing', '0');
 	window.location.href = 'exam.html';
 	initNav(); // Hiển thị trước nav
 	showQuestion(0); // Hiển thị ô đầu
 	loadQuestions(); // Lấy dữ liệu
 }
 
-function generateExamFromQuestions(allQuestions, total, easyCount, mediumCount, hardCount) {
-    const easy = allQuestions.filter(q => q.difficulty === 'easy');
-    const medium = allQuestions.filter(q => q.difficulty === 'medium');
-    const hard = allQuestions.filter(q => q.difficulty === 'hard');
-
-    if (easy.length < easyCount || medium.length < mediumCount || hard.length < hardCount) {
-        alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
-        return;
-    } else {        
-		if (localStorage.getItem('isStudent') == '1') {
-			
-		} else {
-        	window.location.href = 'load.html';
-		}
-    }
-
-    function pickRandom(arr, n) {
-        const copy = [...arr];
-        const result = [];
-        while (result.length < n && copy.length > 0) {
-            const idx = Math.floor(Math.random() * copy.length);
-            result.push(copy.splice(idx, 1)[0]);
-        }
-        return result;
-    }
-
-    const selectedEasy = pickRandom(easy, easyCount);
-    const selectedMedium = pickRandom(medium, mediumCount);
-    const selectedHard = pickRandom(hard, hardCount);
-
-    let exam = [...selectedEasy, ...selectedMedium, ...selectedHard];
-
-    // 🔄 Trộn câu hỏi
-    exam = shuffleArray(exam);
+function generateExamFromQuestions(allQuestions, total, form, examType) {
+	// Nếu là tự luận thì chỉ lấy đúng số lượng, không xử lý logic trắc nghiệm
+	// Trắc nghiệm hoặc mix: giữ logic cũ
+	const easyCount = form[examType]?.easy || 0;
+	const mediumCount = form[examType]?.medium || 0;
+	const hardCount = form[examType]?.hard || 0;
+	const easy = allQuestions.filter(q => q.difficulty === 'easy');
+	const medium = allQuestions.filter(q => q.difficulty === 'medium');
+	const hard = allQuestions.filter(q => q.difficulty === 'hard');	
 	
-    // 🔄 Trộn đáp án từng câu
-    exam = exam.map((q) => {
-        const options = shuffleArray(q.options); // Trộn mảng đáp án
-        let oldCorrectId = q.correct ? parseInt(q.correct) : null;
-        // Xác định đáp án đúng mới dựa vào nội dung đáp án đúng (q.correct là context)
-        let correctOption = q.options.find(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase());
-        let newCorrect = "";
-        if (correctOption) {
-            newCorrect = options.findIndex(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase()) + 1;
-        }
-        return {
-            ...q,
-            options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })),
-            correct: newCorrect ? newCorrect.toString() : ""
-        };
-    });
+	if (easy.length < easyCount || medium.length < mediumCount || hard.length < hardCount) {
+		alert("❌ Không đủ câu hỏi theo từng mức độ yêu cầu.");
+		return;
+	} else {        
+		if (localStorage.getItem('isStudent') == '1') {
+			// ...existing code...
+		} else {
+			window.location.href = 'load.html';
+		}
+	}
+
+	if (examType === 'essay' || examType === 'tự luận') {
+		// Chỉ lấy đúng số lượng câu tự luận
+		let exam = allQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận').slice(0, total);
+		return exam;
+	}
+
+	if (examType === 'quiz' || examType === 'Trắc nghiệm') {
+		// Đề quiz: chỉ lấy đúng số lượng câu trắc nghiệm
+		let quizQuestions = allQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+		let quizShuffled = shuffleArray(quizQuestions);
+		let exam = quizShuffled.slice(0, total);
+		return exam;
+	}
+
+	if (examType === 'mix') {
+		// Đề mix: quiz trên, essay dưới
+		const quizQuestions = allQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+		const essayQuestions = allQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận');
+		// Trộn quiz và essay riêng biệt
+		const quizShuffled = shuffleArray(quizQuestions);
+		const essayShuffled = shuffleArray(essayQuestions);
+		// Ghép quiz trước, essay sau, lấy đủ số lượng
+		let exam = [...quizShuffled, ...essayShuffled].slice(0, total);
+		return exam;
+	}
+
+	function pickRandom(arr, n) {
+		const copy = [...arr];
+		const result = [];
+		while (result.length < n && copy.length > 0) {
+			const idx = Math.floor(Math.random() * copy.length);
+			result.push(copy.splice(idx, 1)[0]);
+		}
+		return result;
+	}
+
+	const selectedEasy = pickRandom(easy, easyCount);
+	const selectedMedium = pickRandom(medium, mediumCount);
+	const selectedHard = pickRandom(hard, hardCount);
+
+	let exam = [...selectedEasy, ...selectedMedium, ...selectedHard];
+
+	// 🔄 Trộn câu hỏi
+	exam = shuffleArray(exam);
     
-    return exam.slice(0, total);
+	// 🔄 Trộn đáp án từng câu
+	exam = exam.map((q) => {
+		const options = shuffleArray(q.options); // Trộn mảng đáp án
+		let oldCorrectId = q.correct ? parseInt(q.correct) : null;
+		// Xác định đáp án đúng mới dựa vào nội dung đáp án đúng (q.correct là context)
+		let correctOption = q.options.find(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase());
+		let newCorrect = "";
+		if (correctOption) {
+			newCorrect = options.findIndex(opt => String(opt.context).trim().toLowerCase() === String(q.correct).trim().toLowerCase()) + 1;
+		}
+		return {
+			...q,
+			options: options.map((opt, idx) => ({ ...opt, id: idx + 1 })),
+			correct: newCorrect ? newCorrect.toString() : ""
+		};
+	});
+    
+	return exam.slice(0, total);
 }
 
 // Trộn mảng (Fisher–Yates)
@@ -78,7 +110,7 @@ function shuffleArray(arr) {
 	const array = [...arr];
 	for (let i = array.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[array[i], array[j]] = [array[j], array[i]];
+		[array[i], array[j] ] = [array[j], array[i]];
 	}
 	return array;
 }
@@ -123,6 +155,7 @@ function readFile(file) {
 				question: row.question || "",
 				media: row.media || "",
 				subject: row.subject || "",
+				type: row.type || "",
 				grade: row.grade || "",
 				options: [
 					{ context: row.A || "", id: 1 },
@@ -144,14 +177,12 @@ function readFile(file) {
 			localStorage.setItem('questions', JSON.stringify(questions));
 			const allQuestions = JSON.parse(localStorage.getItem('questions')) || [];
 			const total = parseInt(localStorage.getItem('totalQuestions')) || 40;
-			const easy = parseInt(localStorage.getItem('easyCount')) || 0;
-			const medium = parseInt(localStorage.getItem('mediumCount')) || 0;
-			const hard = parseInt(localStorage.getItem('hardCount')) || 0;
-			
-			let generatedQuestions = generateExamFromQuestions(allQuestions, total, easy, medium, hard);
+			const examType = localStorage.getItem('examType') || 'quiz';
+			const form = JSON.parse(localStorage.getItem('form') || '{}');
+			let generatedQuestions = generateExamFromQuestions(allQuestions, total, form, examType);
 			localStorage.setItem('questions', JSON.stringify(generatedQuestions));                        
-            localStorage.setItem('isNewExam', 1);                    
-            localStorage.setItem('examId', '');
+			localStorage.setItem('isNewExam', 1);                    
+			localStorage.setItem('examId', '');
 		}
 	};
 
@@ -247,55 +278,76 @@ function showQuestion(idx) {
 	// Hiển thị số thứ tự
 	document.getElementById('currentIndex').innerText = idx + 1;
 
-	// Hiển thị danh sách đáp án
+
+	// Nếu là câu tự luận thì sinh textarea nhập đáp án
 	const opts = document.getElementById('viewOptions');
 	opts.innerHTML = '';
-
-	['A', 'B', 'C', 'D'].forEach((label, i) => {
-		const option = options[i] || { context: '', id: null };
-		const li = document.createElement('li');
-		li.innerHTML = `<span>${label}. ${option.context}</span>`;
-		li.dataset.id = option.id;
-
-		// Nếu người dùng đã chọn trước thì đánh dấu lại
-		if (q.userAnswer === option.context) {
-			li.classList.add('selected');
+	
+	if (q.type === 'essay' || q.type === 'tự luận') {
+		// Tự luận: giữ nguyên logic
+		const textarea = document.createElement('textarea');
+		textarea.id = 'essayAnswer';
+		textarea.placeholder = 'Nhập câu trả lời...';
+		textarea.style.width = '100%';
+		textarea.style.minHeight = '300px';
+		textarea.value = q.userAnswer || '';
+		textarea.disabled = isSubmitted;
+		textarea.addEventListener('input', function() {
+			generatedQuestions[idx].userAnswer = textarea.value;
+			updateAnsweredNav();
+		});
+		opts.appendChild(textarea);
+		if (isSubmitted && q.description) {
+			const desc = document.createElement('div');
+			desc.className = 'explanation';
+			desc.innerHTML = `<strong>Giải thích:</strong> ${q.description}`;
+			opts.appendChild(desc);
 		}
-		
-		// Nếu đã nộp bài → xử lý chấm điểm màu
-		if (isSubmitted) {
-			// Nếu là đáp án đúng → tô xanh
-			if ((i + 1).toString() === q.correct) {
-				li.classList.add('correct-answer');
-			}
-			// Nếu người dùng chọn đáp án này và nó sai → tô đỏ
-			if (
-				q.userAnswer === option.context &&
-				(i + 1).toString() !== q.correct
-			) {
-				li.classList.add('wrong-answer');
-			}
-			// Khoá không cho chọn lại
-			li.style.pointerEvents = 'none';
-			li.style.opacity = '0.6';
-		} else {
-			// Nếu chưa nộp thì cho chọn
-			li.addEventListener('click', () => {
-				opts.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+	} else if (q.type === 'quiz' || q.type === 'Trắc nghiệm' || localStorage.getItem('examType') === 'mix') {
+		// Trắc nghiệm hoặc đề mix: hiển thị đáp án đúng/sai/chưa làm, luôn giữ selected cho đáp án đã chọn
+		['A', 'B', 'C', 'D'].forEach((label, i) => {
+			const option = options[i] || { context: '', id: null };
+			const li = document.createElement('li');
+			li.innerHTML = `<span>${label}. ${option.context}</span>`;
+			li.dataset.id = option.id;
+			// Luôn giữ selected cho đáp án đã chọn
+			if (q.userAnswer === option.context) {
 				li.classList.add('selected');
-				generatedQuestions[idx].userAnswer = option.context;
-				updateAnsweredNav();
-			});
+			}
+			
+			if (isSubmitted) {	
+				// Nếu đáp án này là đúng
+
+				// Đáp án đúng luôn xanh
+				if ((i + 1) === q.correctId) {
+					li.classList.add('correct-answer');
+				}
+				// Nếu người dùng chọn đáp án này
+				if (q.userAnswer === option.context) {
+					li.classList.add('selected');
+					// Nếu chọn sai thì đỏ
+					if ((i + 1) !== q.correctId) {
+						li.classList.add('wrong-answer');
+					}
+				}
+				li.style.pointerEvents = 'none';
+				li.style.opacity = '0.6';
+			} else {
+				li.addEventListener('click', () => {
+					opts.querySelectorAll('li').forEach(el => el.classList.remove('selected'));
+					li.classList.add('selected');
+					generatedQuestions[idx].userAnswer = option.context;
+					updateAnsweredNav();
+				});
+			}
+			opts.appendChild(li);
+		});
+		if (isSubmitted && q.description) {
+			const desc = document.createElement('div');
+			desc.className = 'explanation';
+			desc.innerHTML = `<strong>Giải thích:</strong> ${q.description}`;
+			opts.appendChild(desc);
 		}
-
-		opts.appendChild(li);
-	});
-
-	if (isSubmitted && q.description) {
-		const desc = document.createElement('div');
-		desc.className = 'explanation';
-		desc.innerHTML = `<strong>Giải thích:</strong> ${q.description}`;
-		document.getElementById('viewOptions').appendChild(desc);
 	}
 
 	// Hiển thị ảnh nếu có
@@ -369,21 +421,87 @@ function loadQuestions() {
 			renderPage();
 		}
 	});
+
+	// Nếu đã nộp bài, hiển thị lại modal kết quả đúng kiểu đề
+	if (isSubmitted) {
+		let correctCount = 0, wrongCount = 0, unansweredCount = 0;
+		generatedQuestions.forEach((q) => {
+			if (q.type === 'quiz' || q.type === 'Trắc nghiệm') {
+				const correctIndex = parseInt(q.correct) - 1;
+				const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+				if (!q.userAnswer) {
+					unansweredCount++;
+				} else if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
+					correctCount++;
+				} else {
+					wrongCount++;
+				}
+			}
+		});
+		let resultText = '';
+		const examType = localStorage.getItem('examType');
+		const timeText = document.getElementById('timerDisplay') ? document.getElementById('timerDisplay').innerText : '';
+		if (examType === 'essay' || examType === 'tự luận') {
+			const totalEssay = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận').length;
+			const essayDone = generatedQuestions.filter(q => (q.type === 'essay' || q.type === 'tự luận') && q.userAnswer && q.userAnswer.trim() !== '').length;
+			const essayNotDone = totalEssay - essayDone;
+			resultText = `📝 Đề tự luận<br>Đã làm: <b>${essayDone}</b> / ${totalEssay}<br>Chưa làm: <b>${essayNotDone}</b><br>⏱️ Thời gian làm bài: ${timeText}`;
+		} else if (examType === 'mix') {
+			const quizQuestions = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+			const essayQuestions = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận');
+			const quizCount = quizQuestions.length;
+			const correctQuiz = quizQuestions.filter((q) => {
+				const correctIndex = parseInt(q.correct) - 1;
+				const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+				return q.userAnswer && String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase();
+			}).length;
+			const wrongQuiz = quizQuestions.filter((q) => {
+				const correctIndex = parseInt(q.correct) - 1;
+				const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+				return q.userAnswer && String(q.userAnswer).trim().toLowerCase() !== String(correctContext).trim().toLowerCase();
+			}).length;
+			const unansweredQuiz = quizQuestions.filter(q => !q.userAnswer).length;
+			const totalEssay = essayQuestions.length;
+			const essayDone = essayQuestions.filter(q => q.userAnswer && q.userAnswer.trim() !== '').length;
+			const essayNotDone = totalEssay - essayDone;
+			resultText = `<b>Đề mix</b><br><u>Trắc nghiệm:</u><br>✅ Đúng: ${correctQuiz}<br>❌ Sai: ${wrongQuiz}<br>⚠️ Chưa làm: ${unansweredQuiz}<br><u>Tự luận:</u><br>Đã làm: <b>${essayDone}</b> / ${totalEssay}<br>Chưa làm: <b>${essayNotDone}</b><br>⏱️ Thời gian làm bài: ${timeText}`;
+		} else {
+			resultText = `✅ Đúng: ${correctCount}<br>❌ Sai: ${wrongCount}<br>⚠️ Chưa làm: ${unansweredCount}<br>⏱️ Thời gian làm bài: ${timeText}`;
+		}
+		setTimeout(function() {
+			if (document.getElementById('resultBody')) {
+				document.getElementById('resultBody').innerHTML = resultText;
+			}
+			if (document.getElementById('resultModal')) {
+				document.getElementById('resultModal').style.display = 'block';
+			}
+		}, 300);
+	}
 }
 
 function updateAnsweredNav() {
 	const navItems = document.querySelectorAll('#questionNav li');
 	generatedQuestions.forEach((q, i) => {
 		const li = navItems[i];
-		if (li) {
-			if (q.userAnswer) {
-				li.classList.remove('unanswered'); // Xóa lớp 'unanswered' nếu đã trả lời
-				li.classList.add('answered'); // Thêm lớp 'answered' cho câu đã trả lời
-			} else {
-				li.classList.remove('answered'); // Xóa lớp 'answered' nếu chưa trả lời
-				if (isSubmitted) {
-					li.classList.add('unanswered'); // Thêm lớp 'unanswered' nếu chưa trả lời và chưa nộp bài
+		if (!li) return;
+		li.classList.remove('answered', 'unanswered', 'correct', 'wrong');
+		if (q.userAnswer) {
+			if (isSubmitted && (q.type === 'quiz' || q.type === 'Trắc nghiệm')) {
+				// Đã nộp bài, đánh dấu đúng/sai cho câu trắc nghiệm
+				const correctIndex = parseInt(q.correctId) - 1;
+				const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+				if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
+					li.classList.add('correct');
+				} else {
+					li.classList.add('wrong');
 				}
+			} else {
+				// Chưa nộp bài hoặc câu tự luận
+				li.classList.add('answered');
+			}
+		} else {
+			if (isSubmitted) {
+				li.classList.add('unanswered');
 			}
 		}
 	});
@@ -435,6 +553,7 @@ function submitExam(type) {
 			⚠️ Chưa làm: ${totalQuestions}<br>
 			⏱️ Thời gian làm bài: 0 phút 0 giây
 		`;
+		
 		document.getElementById('resultBody').innerHTML = resultText;
 		document.getElementById('resultModal').style.display = 'block';
 		// Gửi kết quả lên BE với trạng thái chưa làm
@@ -455,6 +574,14 @@ function submitExam(type) {
 		saveResult(resultData);
 		return;
 	}
+	// Nếu isStudentDoing = 0 thì không submit bài thi
+	if (localStorage.getItem('isStudentDoing') == '0') {
+		renderPage();
+		showQuestion(current);
+		document.getElementById('resultBody').innerHTML = '<b>Chế độ thi thử: kết quả không được lưu.</b>';
+		document.getElementById('resultModal').style.display = 'block';
+		return;
+	}
 	if (isSubmitted) return; // Không nộp lại
 	isSubmitted = true;
 	localStorage.setItem('isSubmitted', isSubmitted); // Lưu trạng thái đã nộp
@@ -471,34 +598,41 @@ function submitExam(type) {
 	let wrongCount = 0;
 	let unansweredCount = 0;
 	let answer = [];
-
+	
 	generatedQuestions.forEach((q, idx) => {
 		const navItem = document.querySelectorAll('#questionNav li')[idx];
-		// Lấy context đáp án đúng theo vị trí correct
-		const correctIndex = parseInt(q.correct) - 1;
-		const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
-		
-		answer.push({
-			questionId: q.id,
-			userAnswer: q.userAnswer,
-			correctAnswer: correctContext
-		});
-		
-		if (!q.userAnswer) {
-			// Chưa làm
-			unansweredCount++;
-			navItem.classList.remove('correct', 'wrong');
-			navItem.classList.add('unanswered');
-		} else if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
-			// Đúng
-			correctCount++;
-			navItem.classList.remove('wrong', 'unanswered');
-			navItem.classList.add('correct');
+		// Chỉ tính điểm cho câu trắc nghiệm
+		if (q.type === 'quiz' || q.type === 'Trắc nghiệm') {
+			const correctIndex = parseInt(q.correctId) - 1;
+			const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+			answer.push({
+				questionId: q.id,
+				userAnswer: q.userAnswer,
+				correctAnswer: correctContext
+			});
+			if (!q.userAnswer) {
+				// Chưa làm
+				unansweredCount++;
+				navItem.classList.remove('correct', 'wrong');
+				navItem.classList.add('unanswered');
+			} else if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
+				// Đúng
+				correctCount++;
+				navItem.classList.remove('wrong', 'unanswered');
+				navItem.classList.add('correct');
+			} else {
+				// Sai
+				wrongCount++;
+				navItem.classList.remove('correct', 'unanswered');
+				navItem.classList.add('wrong');
+			}
 		} else {
-			// Sai
-			wrongCount++;
-			navItem.classList.remove('correct', 'unanswered');
-			navItem.classList.add('wrong');
+			// Câu tự luận: chỉ lưu đáp án, không tính điểm
+			answer.push({
+				questionId: q.id,
+				userAnswer: q.userAnswer,
+				correctAnswer: null
+			});
 		}
 	});
 
@@ -512,20 +646,55 @@ function submitExam(type) {
 	const btn = document.querySelector('button[onclick="confirmSubmit()"]');
 	if (btn) btn.disabled = true;
 	
-	// Hiển thị kết quả bằng modal
-	const resultText = `
-		✅ Đúng: ${correctCount}<br>
-		❌ Sai: ${wrongCount}<br>
-		⚠️ Chưa làm: ${unansweredCount}<br>
-		⏱️ Thời gian làm bài: ${timeText}
-	`;
+	// Hiển thị kết quả bằng modal tuỳ loại đề
+	let resultText = '';
+	const examType = localStorage.getItem('examType');
+	if (examType === 'mix') {
+		const quizQuestions = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+		const essayQuestions = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận');
+		const quizCount = quizQuestions.length;
+		const correctQuiz = quizQuestions.filter((q) => {
+			const correctIndex = parseInt(q.correct) - 1;
+			const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+			return q.userAnswer && String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase();
+		}).length;
+		const wrongQuiz = quizQuestions.filter((q) => {
+			const correctIndex = parseInt(q.correct) - 1;
+			const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
+			return q.userAnswer && String(q.userAnswer).trim().toLowerCase() !== String(correctContext).trim().toLowerCase();
+		}).length;
+		const unansweredQuiz = quizQuestions.filter(q => !q.userAnswer).length;
+		const totalEssay = essayQuestions.length;
+		const essayDone = essayQuestions.filter(q => q.userAnswer && q.userAnswer.trim() !== '').length;
+		const essayNotDone = totalEssay - essayDone;
+		resultText = `<b>Đề mix</b><br><u>Trắc nghiệm:</u><br>✅ Đúng: ${correctQuiz}<br>❌ Sai: ${wrongQuiz}<br>⚠️ Chưa làm: ${unansweredQuiz}<br><u>Tự luận:</u><br>Đã làm: <b>${essayDone}</b> / ${totalEssay}<br>Chưa làm: <b>${essayNotDone}</b><br>⏱️ Thời gian làm bài: ${timeText}`;
+	} else if (examType === 'essay' || examType === 'tự luận') {
+		const totalEssay = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận').length;
+		const essayDone = generatedQuestions.filter(q => (q.type === 'essay' || q.type === 'tự luận') && q.userAnswer && q.userAnswer.trim() !== '').length;
+		const essayNotDone = totalEssay - essayDone;
+		resultText = `
+			📝 Đề tự luận<br>
+			Đã làm: <b>${essayDone}</b> / ${totalEssay}<br>
+			Chưa làm: <b>${essayNotDone}</b><br>
+			⏱️ Thời gian làm bài: ${timeText}
+		`;
+	} else {
+		resultText = `
+			✅ Đúng: ${correctCount}<br>
+			❌ Sai: ${wrongCount}<br>
+			⚠️ Chưa làm: ${unansweredCount}<br>
+			⏱️ Thời gian làm bài: ${timeText}
+		`;
+	}
 	
 	// Hiển thị spinner khi submit
     const spinnerModal = document.getElementById('loadingModal');
     if (spinnerModal) spinnerModal.style.display = 'flex';
 
     // Đẩy dữ liệu lên BE
-    const point = Math.round((correctCount / totalQuestions) * 10 * 100) / 100; // Điểm = (số câu đúng / tổng câu hỏi) * 10, làm tròn đến 2 chữ số thập phân
+	// Tính điểm chỉ trên số câu trắc nghiệm
+	const quizCount = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm').length;
+	const point = quizCount > 0 ? Math.round((correctCount / quizCount) * 10 * 100) / 100 : 0; // Điểm = (số câu đúng / số câu trắc nghiệm) * 10
     const spentTime = totalTimeSpent;
     const resultData = {
         examId: examId,
@@ -542,20 +711,23 @@ function submitExam(type) {
         note: note
     };
 	
-    localStorage.setItem('questions', JSON.stringify(generatedQuestions));
-    // Gửi kết quả lên BE, xong mới hiện modal kết quả
-    saveResult(resultData).then(() => {
-        if (spinnerModal) spinnerModal.style.display = 'none';
-        const resultText = `
-            ✅ Đúng: ${correctCount}<br>
-            ❌ Sai: ${wrongCount}<br>
-            ⚠️ Chưa làm: ${unansweredCount}<br>
-            ⏱️ Thời gian làm bài: ${timeText}
-        `;
-        showQuestion(current);
-        document.getElementById('resultBody').innerHTML = resultText;
-        document.getElementById('resultModal').style.display = 'block';
-    });
+	localStorage.setItem('questions', JSON.stringify(generatedQuestions));
+	// Gửi kết quả lên BE, xong mới hiện modal kết quả
+	saveResult(resultData).then((response) => {
+		if (spinnerModal) spinnerModal.style.display = 'none';
+		if (response && response.error) {
+			document.getElementById('resultBody').innerHTML = `<span style='color:#d63031;font-weight:500;'>${response.error}</span>`;
+			document.getElementById('resultModal').style.display = 'block';
+			return;
+		}
+		// Đảm bảo cập nhật lại trạng thái đã nộp và hiển thị đáp án đúng cho tất cả câu hỏi
+		isSubmitted = true;
+		localStorage.setItem('isSubmitted', true);
+		renderPage();
+		showQuestion(current);
+		document.getElementById('resultBody').innerHTML = resultText;
+		document.getElementById('resultModal').style.display = 'block';
+	});
 }
 
 // Gửi kết quả thi lên backend
@@ -572,10 +744,8 @@ async function saveResult(resultData) {
             body: formData
         });
         const data = await res.json();
-        console.log('✅ Đã gửi kết quả lên BE:', data);
         return data;
     } catch (err) {
-        console.error('❌ Lỗi gửi kết quả lên BE:', err);
         return null;
     }
 }
@@ -594,25 +764,53 @@ function generatedOptions(question) {
 	let newQuestion = [];
 	for (let i = 0; i < question.length; i++) {
 		const q = question[i];
-		const options = ['A', 'B', 'C', 'D'].map((opt, idx) => ({
-			context: q[opt] || '',
-			id: idx + 1 // Đảm bảo ID từ 1 đến 4
-		}));
-		q['options'] = options;
-
-		// Xử lý difficulty
-		let difficulty = "";
-		if (q.difficulty === "dễ") {
-			difficulty = "easy";
-		} else if (q.difficulty === "trung bình") {
-			difficulty = "medium";
-		} else if (q.difficulty === "khó") {
-			difficulty = "hard";
+		// Nếu là tự luận thì không cần options/correct
+		if (q.type && (q.type === 'essay' || q.type === 'tự luận')) {
+			// Chỉ giữ các trường cần thiết cho tự luận, lưu thêm userAnswer nếu có
+			let { id, question: ques, media, subject, type, grade, description, difficulty, note, userAnswer } = q;
+			// Xử lý difficulty
+			let diff = "";
+			if (difficulty === "dễ") {
+				diff = "easy";
+			} else if (difficulty === "trung bình") {
+				diff = "medium";
+			} else if (difficulty === "khó") {
+				diff = "hard";
+			} else {
+				diff = difficulty;
+			}
+			newQuestion.push({
+				id: id || `Q${i + 1}`,
+				question: ques || "",
+				media: media || "",
+				subject: subject || "",
+				type: type || "essay",
+				grade: grade || "",
+				description: description || "",
+				difficulty: diff,
+				note: note || "",
+				userAnswer: userAnswer || ""
+			});
+		} else {
+			// Trắc nghiệm: giữ options/correct như cũ
+			const options = ['A', 'B', 'C', 'D'].map((opt, idx) => ({
+				context: q[opt] || '',
+				id: idx + 1 // Đảm bảo ID từ 1 đến 4
+			}));
+			q['options'] = options;
+			// Xử lý difficulty
+			let difficulty = "";
+			if (q.difficulty === "dễ") {
+				difficulty = "easy";
+			} else if (q.difficulty === "trung bình") {
+				difficulty = "medium";
+			} else if (q.difficulty === "khó") {
+				difficulty = "hard";
+			}
+			q['difficulty'] = difficulty;
+			newQuestion.push(q);
 		}
-		q['difficulty'] = difficulty;
-		newQuestion.push(q);
 	}
-
 	return newQuestion;
 }
 
@@ -625,9 +823,8 @@ async function getTeacherById() {
 			throw new Error(`HTTP error! status: ${res.status}`);
 		}
 		const data = await res.json();
-		console.log("✅ Lấy thông tin giáo viên thành công:", data);
 		localStorage.setItem('user', JSON.stringify(data));
 	} catch (err) {
-		console.error("❌ Lỗi khi gọi API:", err);
+		
 	}
 }

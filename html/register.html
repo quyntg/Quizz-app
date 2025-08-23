@@ -324,7 +324,6 @@
                 });
                 formData['action'] = 'register';
                 // Gửi dữ liệu lên Google Apps Script bằng fetch
-                console.log('Gửi dữ liệu đăng ký:', formData);
                 fetch(ggApiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

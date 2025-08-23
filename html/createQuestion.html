@@ -216,6 +216,14 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="type">Loại câu hỏi <span class="required-star">*</span></label>
+                <select id="type" name="type" required>
+                    <option value="">Chọn loại câu hỏi</option>
+                    <option value="quiz">Trắc nghiệm</option>
+                    <option value="essay">Tự luận</option>
+                </select>
+            </div>
+            <div class="form-group">
             <label for="grade">Khối/Lớp <span class="required-star">*</span></label>
                 <select id="grade" name="grade" required>
                     <option value="">Chọn khối/lớp</option>
@@ -480,6 +488,7 @@
             // Kiểm tra required cho mediaLink nếu có chọn loại media
             const mediaType = document.getElementById('mediaType');
             const mediaLink = document.getElementById('mediaLink');
+            const type = document.getElementById('type');
             if (mediaType.value && mediaType.value !== '') {
                 if (!mediaLink.value || mediaLink.value.trim() === '') {
                     mediaLink.focus();
@@ -504,28 +513,30 @@
             // Lấy dữ liệu từ form
             let correct = "";
             let correctId = document.getElementById('correctId').value;
-            if (correctId == 1) {
-                correct = document.getElementById('answerA').value;
-            } else if (correctId == 2) {
-                correct = document.getElementById('answerB').value;
-            } else if (correctId == 3) {
-                correct = document.getElementById('answerC').value;
-            } else if (correctId == 4) {
-                correct = document.getElementById('answerD').value;
+            if (type.value === 'quiz') {
+                if (correctId == 1) {
+                    correct = document.getElementById('answerA').value;
+                } else if (correctId == 2) {
+                    correct = document.getElementById('answerB').value;
+                } else if (correctId == 3) {
+                    correct = document.getElementById('answerC').value;
+                } else if (correctId == 4) {
+                    correct = document.getElementById('answerD').value;
+                }
             }
-
             const data = {
-                type: 'nhaplieu',
+                actionType: 'nhaplieu',
+                type: type.value,
                 question: document.getElementById('questionContent').value,
                 subject: document.getElementById('subject').value,
                 grade: document.getElementById('grade').value,
                 media: mediaLink.value,
-                A: document.getElementById('answerA').value,
-                B: document.getElementById('answerB').value,
-                C: document.getElementById('answerC').value,
-                D: document.getElementById('answerD').value,
-                correct: correct,
-                correctId: correctId,
+                A: type.value === 'quiz' ? document.getElementById('answerA').value : '',
+                B: type.value === 'quiz' ? document.getElementById('answerB').value : '',
+                C: type.value === 'quiz' ? document.getElementById('answerC').value : '',
+                D: type.value === 'quiz' ? document.getElementById('answerD').value : '',
+                correct: type.value === 'quiz' ? correct : '',
+                correctId: type.value === 'quiz' ? correctId : '',
                 description: document.getElementById('description').value,
                 difficulty: document.getElementById('difficulty').value
             };
@@ -553,15 +564,17 @@
             submitBtn.disabled = false;
             submitSpinner.style.display = 'none';
         };
+
         document.getElementById('homeBtn').onclick = function() {
-    const homeBtn = document.getElementById('homeBtn');
-    const homeSpinner = document.getElementById('homeSpinner');
-    homeBtn.disabled = true;
-    homeSpinner.style.display = 'inline-block';
-    setTimeout(function() {
-        window.location.href = 'login.html';
-    }, 600);
-};
+            const homeBtn = document.getElementById('homeBtn');
+            const homeSpinner = document.getElementById('homeSpinner');
+            homeBtn.disabled = true;
+            homeSpinner.style.display = 'inline-block';
+            setTimeout(function() {
+                window.location.href = 'login.html';
+            }, 600);
+        };
+
         function resetForm() {
             document.getElementById('questionForm').reset();
             mediaInputGroup.style.display = 'none';
@@ -571,6 +584,36 @@
             mediaLink.style.display = 'none';
             mediaLink.value = '';
         }
+
+        // Xử lý hiển thị đáp án theo loại câu hỏi
+        const questionType = document.getElementById('type');
+        const answerRows = document.querySelectorAll('.answer-row');
+        const correctIdSelect = document.getElementById('correctId');
+        questionType.addEventListener('change', function() {
+            if (questionType.value === 'essay') {
+                answerRows.forEach(row => {
+                    const input = row.querySelector('input');
+                    if (input) {
+                        input.value = '';
+                        input.disabled = true;
+                    }
+                    row.style.display = 'none';
+                });
+                correctIdSelect.value = '';
+                correctIdSelect.disabled = true;
+                correctIdSelect.parentElement.style.display = 'none';
+            } else {
+                answerRows.forEach(row => {
+                    const input = row.querySelector('input');
+                    if (input) {
+                        input.disabled = false;
+                    }
+                    row.style.display = '';
+                });
+                correctIdSelect.disabled = false;
+                correctIdSelect.parentElement.style.display = '';
+            }
+        });
     </script>
 </body>
 </html>

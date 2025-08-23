@@ -251,41 +251,102 @@
             function renderExam(questionss) {
                 let questionList = '';
                 if (questionss.length > 0) {
-                    questionss.forEach((ques, index) => {
-                        questionList += `<div class="question">`;
-                        questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
-                        questionList += `<ul class="options">`;
-                        ques.options.forEach((opt, ind) => {
-                            let label = '';
-                            switch (ind) {
-                                case 0: label = 'A. '; break;
-                                case 1: label = 'B. '; break;
-                                case 2: label = 'C. '; break;
-                                case 3: label = 'D. '; break;
+                    // Phân loại câu hỏi
+                    const quizQuestions = questionss.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
+                    const essayQuestions = questionss.filter(q => q.type === 'essay' || q.type === 'tự luận');
+                    const examType = localStorage.getItem('examType') || '';
+                    if (isViewResult == 1) {
+                        document.getElementsByClassName('bailam-title')[0].textContent = 'BÀI LÀM';
+                    } else {
+                        document.getElementsByClassName('bailam-title')[0].textContent = 'ĐỀ BÀI';
+                    }
+                    if (examType === 'essay' || examType === 'tự luận') {
+                        // Đề tự luận: chỉ hiển thị đề bài và kết quả nếu có
+                        essayQuestions.forEach((ques, index) => {
+                            questionList += `<div class="question">`;
+                            questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                            if (isViewResult == 1 && ques.userAnswer) {
+                                questionList += `<div style='margin: 8px 0 0 16px;'><b>Trả lời:</b> <span style='background: #f8f9fa; padding: 6px 12px; border-radius: 6px; color: #3498db;'>${ques.userAnswer}</span></div>`;
                             }
-                            let cssClass = '';
-                            if (isViewResult == 1) {
-                                // Đáp án đúng: option có id == correct
-                                let correctIdx = ques.options.findIndex(o => String(o.id) === String(ques.correct));
-                                let correctContext = correctIdx !== -1 ? ques.options[correctIdx].context : '';
-                                // Nếu user chưa chọn hoặc null/rỗng
-                                if (!ques.userAnswer || ques.userAnswer === null || ques.userAnswer === undefined || ques.userAnswer === '') {
-                                    if (ind === correctIdx) cssClass = 'option-correct-empty';
-                                } else if (opt.context === ques.userAnswer) {
-                                    // User chọn đúng
-                                    if (opt.context === correctContext) cssClass = 'option-correct';
-                                    else cssClass = 'option-user';
-                                } else {
-                                    // User chọn sai
-                                    if (opt.context === ques.userAnswer) cssClass = 'option-user';
-                                    if (ind === correctIdx) cssClass = 'option-correct';
-                                }
-                            }
-                            questionList += `<li class='${cssClass.trim()}'>${label}${opt.context}</li>`;
+                            questionList += `</div>`;
                         });
-                        questionList += `</ul>`;
-                        questionList += `</div>`;
-                    });
+                    } else if (examType === 'mix') {
+                        // Đề mix: chia 2 phần
+                        if (quizQuestions.length > 0) {
+                            questionList += `<div class='bailam-title' style='margin-top:24px;'>PHẦN 1: TRẮC NGHIỆM</div>`;
+                            quizQuestions.forEach((ques, index) => {
+                                questionList += `<div class="question">`;
+                                questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                                questionList += `<ul class="options">`;
+                                ques.options.forEach((opt, ind) => {
+                                    let label = '';
+                                    switch (ind) {
+                                        case 0: label = 'A. '; break;
+                                        case 1: label = 'B. '; break;
+                                        case 2: label = 'C. '; break;
+                                        case 3: label = 'D. '; break;
+                                    }
+                                    let cssClass = '';
+                                    if (isViewResult == 1) {
+                                        if (opt.id === ques.correctId) {
+                                            cssClass = 'option-correct';
+                                        }
+                                        if (!ques.userAnswer || ques.userAnswer === null || ques.userAnswer === undefined || ques.userAnswer === '') {
+                                            if (opt.id === ques.correctId) cssClass = 'option-correct-empty';
+                                        } else if (opt.context === ques.userAnswer) {
+                                            if (opt.id === ques.correctId) cssClass = 'option-correct';
+                                            else cssClass = 'option-user';
+                                        }
+                                    }
+                                    questionList += `<li class='${cssClass.trim()}'>${label}${opt.context}</li>`;
+                                });
+                                questionList += `</ul>`;
+                                questionList += `</div>`;
+                            });
+                        }
+                        if (essayQuestions.length > 0) {
+                            questionList += `<div class='bailam-title' style='margin-top:24px;'>PHẦN 2: TỰ LUẬN</div>`;
+                            essayQuestions.forEach((ques, index) => {
+                                questionList += `<div class="question">`;
+                                questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;                                
+                                if (isViewResult == 1 && ques.userAnswer) {
+                                    questionList += `<div style='margin: 8px 0 0 16px;'><b>Trả lời:</b> <span style='background: #f8f9fa; padding: 6px 12px; border-radius: 6px; color: #3498db;'>${ques.userAnswer}</span></div>`;
+                                }
+                                questionList += `</div>`;
+                            });
+                        }
+                    } else {
+                        // Đề trắc nghiệm: như cũ
+                        quizQuestions.forEach((ques, index) => {
+                            questionList += `<div class="question">`;
+                            questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                            questionList += `<ul class="options">`;
+                            ques.options.forEach((opt, ind) => {
+                                let label = '';
+                                switch (ind) {
+                                    case 0: label = 'A. '; break;
+                                    case 1: label = 'B. '; break;
+                                    case 2: label = 'C. '; break;
+                                    case 3: label = 'D. '; break;
+                                }
+                                let cssClass = '';
+                                if (isViewResult == 1) {
+                                    if (opt.id === ques.correctId) {
+                                        cssClass = 'option-correct';
+                                    }
+                                    if (!ques.userAnswer || ques.userAnswer === null || ques.userAnswer === undefined || ques.userAnswer === '') {
+                                        if (opt.id === ques.correctId) cssClass = 'option-correct-empty';
+                                    } else if (opt.context === ques.userAnswer) {
+                                        if (opt.id === ques.correctId) cssClass = 'option-correct';
+                                        else cssClass = 'option-user';
+                                    }
+                                }
+                                questionList += `<li class='${cssClass.trim()}'>${label}${opt.context}</li>`;
+                            });
+                            questionList += `</ul>`;
+                            questionList += `</div>`;
+                        });
+                    }
                 }
                 let listQuestion = document.getElementById('list-question');
                 listQuestion.innerHTML = questionList;
@@ -300,12 +361,23 @@
                     let examId = localStorage.getItem('examId') || '';
                     let subjectId = localStorage.getItem('subject') || '';
                     let resultId = localStorage.getItem('resultId') || '';
+                    
                     const url = `${ggApiUrl}?action=getExamWithAnswer&examId=${encodeURIComponent(examId)}&subject=${encodeURIComponent(subjectId)}&resultId=${encodeURIComponent(resultId)}`;
                     try {
                         const res = await fetch(url);
                         const data = await res.json();
+                        // Gán userAnswer cho từng câu hỏi nếu có trường answer từ API
+                        if (Array.isArray(data.list) && Array.isArray(data.answer)) {
+                            const answerMap = {};
+                            data.answer.forEach(a => {
+                                if (a.questionId) answerMap[a.questionId] = a.userAnswer;
+                            });
+                            data.list = data.list.map(q => {
+                                return { ...q, userAnswer: answerMap[q.id] || q.userAnswer || '' };
+                            });
+                        }
                         let newQuestions = generatedOptions(data.list);
-                        let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
+                        let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.form, data.type);
 
                         questionss = generatedQuestions || [];
                         localStorage.setItem('questions', JSON.stringify(questionss));

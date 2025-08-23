@@ -228,27 +228,31 @@
                 if (data) {
                     localStorage.setItem('examName', data.name || '');
                     localStorage.setItem('examTime', data.time || '');
-                    localStorage.setItem('easyCount', data.easy || 0);
-                    localStorage.setItem('mediumCount', data.medium || 0);
-                    localStorage.setItem('hardCount', data.hard || 0);
+                    let form = {
+                        quiz: { easy: data.easy || 0, medium: data.medium || 0, hard: data.hard || 0 },
+                        essay: { easy: data.essayEasy || 0, medium: data.essayMedium || 0, hard: data.essayHard || 0 }
+                    };
+                    localStorage.setItem('form', JSON.stringify(form));
                     localStorage.setItem('grade', data.grade || '');
                     localStorage.setItem('school', data.school || '');
                     localStorage.setItem('subject', data.subject || '');
                     localStorage.setItem('totalQuestions', data.total || 0);                  
-                    localStorage.setItem('examId', data.id);
+                    localStorage.setItem('examId', data.id);              
+                    localStorage.setItem('examType', data.type);
 
                     document.getElementById('studentSchool').value = data.school || '';
 
                     let newQuestions = generatedOptions(data.list || []);
-                    let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, data.easy, data.medium, data.hard);
+                    let examType = data.type || 'quiz';
+                    let generatedQuestions = generateExamFromQuestions(newQuestions, data.total, form, examType);
                     localStorage.setItem('questions', JSON.stringify(generatedQuestions));
                     localStorage.setItem('isNewExam', 0);     
                 } else {
-                    console.log('Không thành công!');
+                    
                 }
             } catch (e) {
                 // Xử lý lỗi nếu cần
-                console.log('Lỗi khi lấy đề thi:', e);
+                
             } finally {
                 document.getElementById('loadingExamModal').style.display = 'none';
             }
