@@ -532,7 +532,7 @@ function submitExam(type) {
     const studentCode = studentInfo.code || '';
     const studentSchool = studentInfo.school || '';
     const studentClass = studentInfo.class || '';
-    const note = '';
+    const hasPoint = 0;
 	if (type == 0) {
 		// Gán userAnswer là đáp án đúng cho tất cả câu hỏi
 		generatedQuestions.forEach((q) => {
@@ -569,7 +569,7 @@ function submitExam(type) {
 			spentTime: 0,
 			point: 0,
 			answer: '[]',
-			note: note
+			hasPoint: hasPoint
 		};
 		saveResult(resultData);
 		return;
@@ -598,38 +598,51 @@ function submitExam(type) {
 	let wrongCount = 0;
 	let unansweredCount = 0;
 	let answer = [];
-	
+
 	generatedQuestions.forEach((q, idx) => {
 		const navItem = document.querySelectorAll('#questionNav li')[idx];
-		// Chỉ tính điểm cho câu trắc nghiệm
 		if (q.type === 'quiz' || q.type === 'Trắc nghiệm') {
 			const correctIndex = parseInt(q.correctId) - 1;
 			const correctContext = (q.options && q.options[correctIndex]) ? q.options[correctIndex].context : '';
 			answer.push({
 				questionId: q.id,
+				type: q.type,
 				userAnswer: q.userAnswer,
 				correctAnswer: correctContext
 			});
 			if (!q.userAnswer) {
-				// Chưa làm
 				unansweredCount++;
 				navItem.classList.remove('correct', 'wrong');
 				navItem.classList.add('unanswered');
 			} else if (String(q.userAnswer).trim().toLowerCase() === String(correctContext).trim().toLowerCase()) {
-				// Đúng
 				correctCount++;
 				navItem.classList.remove('wrong', 'unanswered');
 				navItem.classList.add('correct');
 			} else {
-				// Sai
 				wrongCount++;
 				navItem.classList.remove('correct', 'unanswered');
 				navItem.classList.add('wrong');
 			}
-		} else {
-			// Câu tự luận: chỉ lưu đáp án, không tính điểm
+		} else if (q.type === 'essay' || q.type === 'tự luận') {
 			answer.push({
 				questionId: q.id,
+				type: q.type,
+				userAnswer: q.userAnswer,
+				correctAnswer: null
+			});
+			// Nếu chưa nhập đáp án thì tính là chưa trả lời
+			if (!q.userAnswer || q.userAnswer.trim() === '') {
+				unansweredCount++;
+				if (navItem) {
+					navItem.classList.remove('answered');
+					navItem.classList.add('unanswered');
+				}
+			}
+		} else {
+			// Loại khác, vẫn lưu đáp án
+			answer.push({
+				questionId: q.id,
+				type: q.type,
 				userAnswer: q.userAnswer,
 				correctAnswer: null
 			});
@@ -648,7 +661,7 @@ function submitExam(type) {
 	
 	// Hiển thị kết quả bằng modal tuỳ loại đề
 	let resultText = '';
-	const examType = localStorage.getItem('examType');
+	// Đã có examType ở trên, không khai báo lại
 	if (examType === 'mix') {
 		const quizQuestions = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm');
 		const essayQuestions = generatedQuestions.filter(q => q.type === 'essay' || q.type === 'tự luận');
@@ -691,25 +704,32 @@ function submitExam(type) {
     const spinnerModal = document.getElementById('loadingModal');
     if (spinnerModal) spinnerModal.style.display = 'flex';
 
-    // Đẩy dữ liệu lên BE
-	// Tính điểm chỉ trên số câu trắc nghiệm
-	const quizCount = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm').length;
-	const point = quizCount > 0 ? Math.round((correctCount / quizCount) * 10 * 100) / 100 : 0; // Điểm = (số câu đúng / số câu trắc nghiệm) * 10
-    const spentTime = totalTimeSpent;
-    const resultData = {
-        examId: examId,
-        studentName: studentName,
-        studentCode: studentCode,
-        studentSchool: studentSchool,
-        studentClass: studentClass,
-        correct: correctCount,
-        wrong: wrongCount,
-        unAnswer: unansweredCount,
-        spentTime: spentTime,
-        point: point,
+	// Đẩy dữ liệu lên BE
+	// Tính điểm chỉ khi đề là quiz, còn mix/essay thì point = 0
+	const examType = localStorage.getItem('examType');
+	let point = 0;
+	if (examType === 'quiz' || examType === 'Trắc nghiệm') {
+		const quizCount = generatedQuestions.filter(q => q.type === 'quiz' || q.type === 'Trắc nghiệm').length;
+		point = quizCount > 0 ? Math.round((correctCount / quizCount) * 10 * 100) / 100 : 0;
+		hasPoint = 1;
+	} else {
+		hasPoint = 0;
+	}
+	const spentTime = totalTimeSpent;
+	const resultData = {
+		examId: examId,
+		studentName: studentName,
+		studentCode: studentCode,
+		studentSchool: studentSchool,
+		studentClass: studentClass,
+		correct: correctCount,
+		wrong: wrongCount,
+		unAnswer: unansweredCount,
+		spentTime: spentTime,
+		point: point,
 		answer: JSON.stringify(answer), // Lưu dưới dạng chuỗi JSON
-        note: note
-    };
+		hasPoint: hasPoint
+	};
 	
 	localStorage.setItem('questions', JSON.stringify(generatedQuestions));
 	// Gửi kết quả lên BE, xong mới hiện modal kết quả

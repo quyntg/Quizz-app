@@ -260,8 +260,8 @@
                     } else {
                         document.getElementsByClassName('bailam-title')[0].textContent = 'ĐỀ BÀI';
                     }
+                    // Luôn hiển thị phần tự luận khi xem lại kết quả (isViewResult == 1)
                     if (examType === 'essay' || examType === 'tự luận') {
-                        // Đề tự luận: chỉ hiển thị đề bài và kết quả nếu có
                         essayQuestions.forEach((ques, index) => {
                             questionList += `<div class="question">`;
                             questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
@@ -271,7 +271,6 @@
                             questionList += `</div>`;
                         });
                     } else if (examType === 'mix') {
-                        // Đề mix: chia 2 phần
                         if (quizQuestions.length > 0) {
                             questionList += `<div class='bailam-title' style='margin-top:24px;'>PHẦN 1: TRẮC NGHIỆM</div>`;
                             quizQuestions.forEach((ques, index) => {
@@ -308,7 +307,7 @@
                             questionList += `<div class='bailam-title' style='margin-top:24px;'>PHẦN 2: TỰ LUẬN</div>`;
                             essayQuestions.forEach((ques, index) => {
                                 questionList += `<div class="question">`;
-                                questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;                                
+                                questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
                                 if (isViewResult == 1 && ques.userAnswer) {
                                     questionList += `<div style='margin: 8px 0 0 16px;'><b>Trả lời:</b> <span style='background: #f8f9fa; padding: 6px 12px; border-radius: 6px; color: #3498db;'>${ques.userAnswer}</span></div>`;
                                 }
@@ -346,6 +345,18 @@
                             questionList += `</ul>`;
                             questionList += `</div>`;
                         });
+                        // Nếu đang xem lại kết quả và có câu tự luận thì vẫn hiển thị phần tự luận
+                        if (isViewResult == 1 && essayQuestions.length > 0) {
+                            questionList += `<div class='bailam-title' style='margin-top:24px;'>PHẦN TỰ LUẬN</div>`;
+                            essayQuestions.forEach((ques, index) => {
+                                questionList += `<div class="question">`;
+                                questionList += `<p><b>Câu hỏi ${index + 1}: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>${ques.question}</p>`;
+                                if (ques.userAnswer) {
+                                    questionList += `<div style='margin: 8px 0 0 16px;'><b>Trả lời:</b> <span style='background: #f8f9fa; padding: 6px 12px; border-radius: 6px; color: #3498db;'>${ques.userAnswer}</span></div>`;
+                                }
+                                questionList += `</div>`;
+                            });
+                        }
                     }
                 }
                 let listQuestion = document.getElementById('list-question');

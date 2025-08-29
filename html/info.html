@@ -546,7 +546,7 @@
                                             <span class='modern-spinner' style='display:none'></span>
                                             Link đề
                                         </button>
-                                        <button class='exam-result-btn' onclick="showExamResult(this, '${exam.subject || ''}', '${exam.id || ''}', '${exam.name || ''}')">
+                                        <button class='exam-result-btn' onclick="showExamResult(this, '${exam.subject || ''}', '${exam.id || ''}', '${exam.name || ''}', '${exam.type || ''}')">
                                             <span class='modern-spinner' style='display:none'></span>
                                             Kết quả
                                         </button>
@@ -671,7 +671,7 @@
             });
         }
 
-        function showExamResult(btn, subject, examId, name) {
+        function showExamResult(btn, subject, examId, name, type) {
             btn.disabled = true;
             const spinner = btn.querySelector('.modern-spinner');
             spinner.style.display = 'inline-block';
@@ -686,9 +686,11 @@
                         return;
                     }
                     localStorage.setItem('studentResults', JSON.stringify(data));
+                    console.log(data);
                     localStorage.setItem('subject', subject);
                     localStorage.setItem('examId', examId);
                     localStorage.setItem('examName', name);
+                    localStorage.setItem('examType', type);
                     window.location.href = 'result.html?examId=' + examId;
                 })
                 .catch(() => {

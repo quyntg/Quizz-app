@@ -7,6 +7,90 @@
     <link rel="stylesheet" href="../css/style.css">
     <script src="../data/data.js"></script>
     <style>
+        /* Modal overlay cho chấm bài */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.25);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content-mark {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(44,123,229,0.18);
+            max-width: 900px;
+            width: 70vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: row;
+            gap: 32px;
+            position: relative;
+        }
+        @media (max-width: 600px) {
+            .modal-content-mark {
+                max-width: 98vw;
+                width: 98vw;
+                flex-direction: column;
+                gap: 18px;
+                padding: 12px 4px;
+            }
+        }
+        .mark-block {
+            width: 30%;
+            margin-top: 30px;
+            min-width: 220px;
+            max-width: 320px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 18px 12px;
+            overflow: auto;
+        }
+        @media (max-width: 600px) {
+            .mark-block {
+                width: 100%;
+                margin-top: 48px;
+                min-width: unset;
+                max-width: unset;
+                background: #f5f7fa;
+                border-radius: 8px;
+                padding: 18px 12px;
+                height: auto;
+            }
+        }
+        .form-block {
+            margin-top: 30px;
+            width: 70%;
+            min-width: 420px;
+            max-width: 650px;
+            overflow: auto;
+        }
+        @media (max-width: 600px) {
+            .form-block {
+                width: 100%;
+                min-width: unset;
+                max-width: unset;
+            }
+        }
+        .btn-close-modal {
+            position: absolute;
+            top: 18px;
+            right: 32px;
+            background: #d63031;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
         body {
             background: #f5f7fa;
             padding: 20px;
@@ -79,6 +163,77 @@
         }
         .result-table td.stt {
             text-align: center;
+        }
+        
+        /* Modal grading inner elements */
+        .form-iframe {
+            width: 100%;
+            height: 70vh;
+            border: none;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: block;
+        }
+        @media (max-width: 600px) {
+            .form-iframe {
+                height: 400px;
+            }
+        }
+        .mark-title {
+            color: #2c7be5;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .mark-question {
+            margin-bottom: 18px;
+        }
+        .mark-q-title {
+            font-weight: 500;
+            color: #222;
+        }
+        .mark-q-answer {
+            margin: 8px 0 0 0;
+        }
+        .mark-q-answer-text {
+            background: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #3498db;
+        }
+        .mark-q-score {
+            margin-top: 8px;
+        }
+        .mark-q-score-label {
+            color: #00b894;
+            font-weight: 500;
+        }
+        .mark-q-score-input {
+            width: 100px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #dfe6e9;
+            margin-left: 8px;
+            height: 30px;
+        }
+        .mark-no-question {
+            color: #888;
+        }
+        .btn-save-score {
+            margin-top: 18px;
+            padding: 8px 18px;
+            background: #00b894;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .error-message {
+            color: #d63031;
+            font-weight: 500;
+            margin-top: 8px;
+            text-align: center;
+            margin: 8px
         }
         @media (max-width: 600px) {
             .result-container {
@@ -160,7 +315,6 @@
     <div class="result-container">
         <h2>Danh sách học sinh đã thi đề này</h2>
         <table class="result-table" id="studentResultTable">
-        <table class="result-table" id="studentResultTable">
             <thead>
                 <tr>
                     <th>STT</th>
@@ -170,7 +324,7 @@
                     <th>Trường</th>
                     <th>Điểm</th>
                     <th>Thời gian</th>
-                    <th>Xem bài thi</th>
+                    <th>Hành động</th>
                     <th>Ngày nộp</th>
                 </tr>
             </thead>
@@ -198,6 +352,7 @@
                 return dateStr;
             }
         }
+        
         function formatTimeMin(timeVal) {
             if (!timeVal) return '00:00';
             // Nếu là số giây, chuyển sang mm:ss
@@ -215,6 +370,148 @@
             }
             return timeVal;
         }
+
+        // Hiển thị modal chấm bài khi bấm nút "Chấm bài"
+        function markStudentExam(resultId) {
+            // Xóa modal cũ nếu có
+            let oldModal = document.getElementById('markEssayModal');
+            if (oldModal) oldModal.remove();
+            // Tạo modal
+            const modal = document.createElement('div');
+            modal.id = 'markEssayModal';
+            modal.classList.add('modal-overlay');
+            // Responsive: web vs mobile
+            const isMobile = window.innerWidth <= 600;
+            let modalContent = document.createElement('div');
+            modalContent.classList.add('modal-content-mark');
+            // Lấy dữ liệu kết quả
+            let studentResults = JSON.parse(localStorage.getItem('studentResults')) || [];
+            let result = studentResults.find(r => r.id == resultId);
+            if (!result) {
+                alert('Không tìm thấy kết quả!');
+                return;
+            }            
+            localStorage.setItem('isViewResult', 1);
+            localStorage.setItem('isStudent', 1);
+            localStorage.setItem('resultId', resultId);
+            localStorage.setItem('examId', result.examId);
+            localStorage.setItem('studentName', result.studentName);
+            localStorage.setItem('studentClass', result.studentClass);
+            let examType = localStorage.getItem('examType') == 'Trắc nghiệm' ? "quiz" : localStorage.getItem('examType') == 'Tự luận' ? "essay" : localStorage.getItem('examType') == 'Trắc nghiệm + Tự luận' ? "mix" : "";
+            let essayAnswers = JSON.parse(result.answer).filter(r => r.type === "essay");
+            // 70%: giao diện bài làm (nhúng file form.html qua iframe)
+            let formBlock = document.createElement('div');
+            formBlock.classList.add('form-block');
+            formBlock.innerHTML = `<iframe src="form.html" style="width: 100%; height: ${isMobile ? '400px' : '70vh'}; border: none; border-radius: 8px; background: #f8f9fa;"></iframe>`;
+            formBlock.innerHTML = `<iframe src="form.html" class="form-iframe"></iframe>`;
+            // 30%: giao diện chấm điểm tự luận
+            let markBlock = document.createElement('div');
+            markBlock.classList.add('mark-block');
+            // Render phần chấm điểm tự luận
+            let essayHtml = `<h3 class='mark-title'>Chấm điểm tự luận</h3>`;
+            if (essayAnswers && Array.isArray(essayAnswers) && essayAnswers.length > 0) {
+                essayAnswers.forEach((ans, idx) => {
+                    essayHtml += `<div class='mark-question'>
+                        <div class='mark-q-title'>Câu ${idx + 1}: ${ans.question || ''}</div>
+                        <div class='mark-q-score'>
+                            <label for='score_${resultId}_${idx}' class='mark-q-score-label'>Điểm:</label>
+                            <input type='number' id='score_${resultId}_${idx}' min='0' max='10' step='0.25' value='${ans.score || ''}' class='mark-q-score-input'>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                essayHtml += `<div class='mark-no-question'>Không có câu tự luận để chấm.</div>`;
+            }
+            essayHtml += `<div id="scoreError" class="error-message" style="display: none;"></div>`;
+            essayHtml += `<div style="text-align: center;"><button onclick='saveEssayScore(${JSON.stringify(resultId)}, "${examType}")' class='btn-save-score'>Lưu điểm</button></div>`;
+            markBlock.innerHTML = essayHtml;
+            // Thêm vào modal
+            if (isMobile) {
+                modalContent.appendChild(markBlock);
+                modalContent.appendChild(formBlock);
+            } else {
+                modalContent.appendChild(formBlock);
+                modalContent.appendChild(markBlock);
+            }
+            // Nút đóng
+            let closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Đóng';
+            closeBtn.classList.add('btn-close-modal');
+            closeBtn.onclick = function() { modal.remove(); };
+            modalContent.appendChild(closeBtn);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Hàm lưu điểm tự luận
+        function saveEssayScore(resultId, examType) {
+            let studentResults = JSON.parse(localStorage.getItem('studentResults')) || [];
+            let result = studentResults.find(r => r.id == resultId);
+            if (!result) return;
+            let answers = JSON.parse(result.answer);
+            let essayAnswers = answers.filter(r => r.type === "essay");
+            let quizAnswers = answers.filter(r => r.type === "quiz");
+            // Tính điểm trắc nghiệm
+            let totalQuizScore = 0;
+            let totalEssayScore = 0;
+            let quizRatio = quizAnswers.length / answers.length;
+            let essayRatio = essayAnswers.length / answers.length;
+            let quizScore = quizRatio / quizAnswers.length * 10; // Mỗi câu đúng được bao nhiêu điểm
+            let essayScore = essayRatio / essayAnswers.length * 10; // Mỗi câu đúng được bao nhiêu điểm
+            let maxQuizScore = quizRatio * 10;
+            let maxEssayScore = essayRatio * 10;
+
+            if (quizAnswers.length > 0) {
+                quizAnswers.forEach(q => {
+                    if (q.userAnswer && q.userAnswer == q.correctAnswer) {
+                        totalQuizScore += quizScore;
+                    }
+                });
+            }
+            
+            // Nhập điểm tự luận
+            let missingEssay = false;
+            essayAnswers.forEach((ans, idx) => {
+                let scoreInput = document.getElementById(`score_${resultId}_${idx}`);
+                if (!scoreInput || scoreInput.value === "" || scoreInput.value === null) {
+                    missingEssay = true;
+                } else {
+                    let val = Number(scoreInput.value);
+                    if (isNaN(val)) val = 0;
+                    ans.score = val;
+                    totalEssayScore += val;
+                }
+            });
+            
+            // Xóa thông báo lỗi cũ nếu có
+            let errorDiv = document.getElementById('scoreError');
+            if (errorDiv) errorDiv.textContent = '';
+            let saveBtn = document.querySelector('.btn-save-score');
+            if (missingEssay || essayAnswers.length === 0) {
+                errorDiv.textContent = 'Bạn phải nhập đủ điểm cho tất cả câu tự luận!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (totalEssayScore > maxEssayScore) {
+                errorDiv.textContent = 'Tổng điểm tự luận vượt quá tỉ lệ cho phép!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            let totalScore = totalQuizScore + totalEssayScore;
+            if (totalScore > 10) {
+                errorDiv.textContent = 'Tổng điểm vượt quá 10!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            console.log(1)
+            let point = Math.round(totalScore * 100) / 100;
+            console.log(2)
+            errorDiv.textContent = 'Đã lưu điểm tự luận = ' + point;
+            console.log(3)
+            errorDiv.style.display = 'block';
+            console.log(4)
+        }
+
         function renderStudentResults(results) {
             const tableBody = document.querySelector('#studentResultTable tbody');
             const resultList = document.getElementById('studentResultList');
@@ -241,6 +538,16 @@
                 const endIdx = Math.min(startIdx + pageSize, results.length);
                 for (let i = startIdx; i < endIdx; i++) {
                     const result = results[i];
+                    let showMarkBtn = false;
+                    // Sử dụng examType từ từng kết quả
+                    const examType = result.examType || localStorage.getItem("examType") || '';
+                    if (
+                        Number(result.point) === 0 &&
+                        result.hasPoint == 0 &&
+                        (examType === 'mix' || examType === 'essay' || examType === 'Tự luận' || examType === 'Trắc nghiệm + Tự luận')
+                    ) {
+                        showMarkBtn = true;
+                    }
                     // Bảng web
                     tableBody.innerHTML += `
                         <tr>
@@ -251,7 +558,10 @@
                             <td>${result.studentSchool}</td>
                             <td class="point">${result.point}</td>
                             <td class="time">${formatTimeMin(result.spentTime)}</td>
-                            <td style="text-align:center;"><button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px;  border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem</button></td>
+                            <td style="text-align:center;">
+                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px;  border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem</button>
+                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}')" style="margin-top: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894; color: #fff; border: none; cursor: pointer;">Chấm bài</button>` : ''}
+                            </td>
                             <td class="status">${formatDateTime(result.submitDate)}</td>
                         </tr>
                     `;
@@ -267,7 +577,10 @@
                             <div class="card-row"><span class="card-label">Thời gian:</span> <span class="card-value">${formatTimeMin(result.spentTime)}</span></div>
                             <div class="card-row"><span class="card-label">Ngày nộp:</span> <span class="card-value">${formatDateTime(result.submitDate)}</span></div>
                             <br>
-                            <div class="card-row button-row"><button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px; border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem bài thi</button></div>
+                            <div class="card-row button-row">
+                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px; border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem bài thi</button>
+                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}')" style="margin-left: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894;color:#fff;border:none;cursor:pointer;">Chấm bài</button>` : ''}
+                            </div>
                         </div>
                     `;
                 }
@@ -284,7 +597,7 @@
             if (results.length > pageSize) {
                 paginationDiv.style.display = 'flex';
                 function createBtn(text, page, disabled) {
-                    return `<button ${disabled ? 'disabled' : ''} onclick="goToPage(${page})" style="padding:4px 10px;border-radius:6px;background:#eaf4fb;color:#2c7be5;border:none;cursor:pointer;font-weight:500;">${text}</button>`;
+                    return `<button ${disabled ? 'disabled' : ''} onclick="goToPage(${page})" style="padding: 4px 10px; border-radius: 6px; background: #eaf4fb; color: #2c7be5; border: none; cursor: pointer; font-weight: 500;">${text}</button>`;
                 }
                 window.goToPage = function(page) {
                     if (page < 1 || page > totalPages) return;
@@ -302,10 +615,11 @@
                     paginationDiv.innerHTML = html;
                 }
                 renderPagination();
+                renderPage(currentPage);
             } else {
                 paginationDiv.style.display = 'none';
+                renderPage(currentPage);
             }
-            renderPage(currentPage);
         }
 
         function viewStudentExam(studentCode, studentName, studentClass, examId, resultId) {
@@ -333,7 +647,7 @@
                 return navEntries[0].type === "reload";
             }
             return performance.navigation.type === performance.navigation.TYPE_RELOAD;
-        }
+        }        
 
         let studentResults = JSON.parse(localStorage.getItem('studentResults'));
         let examId = new URLSearchParams(window.location.search).get('examId');
