@@ -227,6 +227,29 @@
             border-radius: 6px;
             font-size: 1rem;
             cursor: pointer;
+            position: relative;
+        }
+        .btn-save-score .spinner {
+            display: none;
+            position: absolute;
+            left: 40%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            border: 3px solid #fff;
+            border-top: 3px solid #0984e3;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .btn-save-score.loading .spinner {
+            display: inline-block;
+        }
+        .btn-save-score.loading span {
+            visibility: hidden;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .error-message {
             color: #d63031;
@@ -336,6 +359,13 @@
         <div id="noResult" style="text-align: center; color: #888; font-size: 1.05rem; display: none;">Chưa có sinh viên nào thi đề này.</div>
         <div id="pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;"></div>
     </div>
+    <!-- Modal kết quả lưu điểm -->
+    <div id="scoreResultModal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: #fff; padding: 32px 40px; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.18); font-size: 1.2rem; color: #333; display: flex; flex-direction: column; align-items: center;">
+            <span id="scoreResultText">Đã lưu điểm!</span>
+            <button onclick="document.getElementById('scoreResultModal').style.display='none'" style="margin-top: 18px; padding: 8px 24px; border-radius: 8px; border: none; background: #2c7be5; color: #fff; font-size: 1rem; cursor: pointer;">Đóng</button>
+        </div>
+    </div>
     <script>
         function formatDateTime(dateStr) {
             if (!dateStr) return '';
@@ -372,7 +402,8 @@
         }
 
         // Hiển thị modal chấm bài khi bấm nút "Chấm bài"
-        function markStudentExam(resultId) {
+        function markStudentExam(resultId, studentSchool) {
+            localStorage.setItem('school', studentSchool || '');
             // Xóa modal cũ nếu có
             let oldModal = document.getElementById('markEssayModal');
             if (oldModal) oldModal.remove();
@@ -423,7 +454,7 @@
                 essayHtml += `<div class='mark-no-question'>Không có câu tự luận để chấm.</div>`;
             }
             essayHtml += `<div id="scoreError" class="error-message" style="display: none;"></div>`;
-            essayHtml += `<div style="text-align: center;"><button onclick='saveEssayScore(${JSON.stringify(resultId)}, "${examType}")' class='btn-save-score'>Lưu điểm</button></div>`;
+            essayHtml += `<div style="text-align: center;"><button onclick='saveScore(${JSON.stringify(resultId)}, "${examType}")' class='btn-save-score'><span>Lưu điểm</span><div class='spinner'></div></button></div>`;
             markBlock.innerHTML = essayHtml;
             // Thêm vào modal
             if (isMobile) {
@@ -443,8 +474,37 @@
             document.body.appendChild(modal);
         }
 
+        function updateResultPoint(resultId, point) {
+            if (!resultId || !point) return;
+            // Gọi API cập nhật điểm và trạng thái chấm bài
+            fetch(ggApiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=updateResultPoint&resultId=${encodeURIComponent(resultId)}&point=${encodeURIComponent(point)}&hasPoint=1`
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Có thể xử lý thêm nếu cần
+                console.log('updateResultPoint:', data);
+            })
+            .catch(err => {
+                console.error('Lỗi cập nhật điểm:', err);
+            }).finally(() => {
+                document.getElementById('markEssayModal').style.display = 'none';
+                let saveBtn = document.querySelector('.btn-save-score');
+                document.getElementById('scoreResultText').textContent = `Chấm bài thành công!`;
+                document.getElementById('scoreResultModal').style.display = 'flex';
+                if (saveBtn) {
+                    setTimeout(() => {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('loading');
+                    }, 800);
+                }
+            });
+        }
+
         // Hàm lưu điểm tự luận
-        function saveEssayScore(resultId, examType) {
+        function saveScore(resultId, examType) {
             let studentResults = JSON.parse(localStorage.getItem('studentResults')) || [];
             let result = studentResults.find(r => r.id == resultId);
             if (!result) return;
@@ -487,6 +547,10 @@
             let errorDiv = document.getElementById('scoreError');
             if (errorDiv) errorDiv.textContent = '';
             let saveBtn = document.querySelector('.btn-save-score');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('loading');
+            }
             if (missingEssay || essayAnswers.length === 0) {
                 errorDiv.textContent = 'Bạn phải nhập đủ điểm cho tất cả câu tự luận!';
                 errorDiv.style.display = 'block';
@@ -503,13 +567,11 @@
                 errorDiv.style.display = 'block';
                 return;
             }
-            console.log(1)
             let point = Math.round(totalScore * 100) / 100;
-            console.log(2)
-            errorDiv.textContent = 'Đã lưu điểm tự luận = ' + point;
-            console.log(3)
-            errorDiv.style.display = 'block';
-            console.log(4)
+            // errorDiv.textContent = 'Đã lưu điểm tự luận = ' + point;
+            // errorDiv.style.display = 'block';
+            updateResultPoint(resultId, point);
+            // Hiển thị modal kết quả lưu điểm
         }
 
         function renderStudentResults(results) {
@@ -559,8 +621,8 @@
                             <td class="point">${result.point}</td>
                             <td class="time">${formatTimeMin(result.spentTime)}</td>
                             <td style="text-align:center;">
-                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px;  border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem</button>
-                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}')" style="margin-top: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894; color: #fff; border: none; cursor: pointer;">Chấm bài</button>` : ''}
+                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.studentSchool}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px;  border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem</button>
+                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}', '${result.studentSchool}')" style="margin-top: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894; color: #fff; border: none; cursor: pointer;">Chấm bài</button>` : ''}
                             </td>
                             <td class="status">${formatDateTime(result.submitDate)}</td>
                         </tr>
@@ -578,8 +640,8 @@
                             <div class="card-row"><span class="card-label">Ngày nộp:</span> <span class="card-value">${formatDateTime(result.submitDate)}</span></div>
                             <br>
                             <div class="card-row button-row">
-                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px; border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem bài thi</button>
-                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}')" style="margin-left: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894;color:#fff;border:none;cursor:pointer;">Chấm bài</button>` : ''}
+                                <button onclick="viewStudentExam('${result.studentCode}', '${result.studentName}', '${result.studentClass}', '${result.studentSchool}', '${result.examId || ''}', '${result.id || ''}')" style="padding: 4px 10px; border-radius:6px; background: #2c7be5; color: #fff; border: none; cursor: pointer;">Xem bài thi</button>
+                                ${showMarkBtn ? `<button onclick="markStudentExam('${result.id}', '${result.studentSchool}')" style="margin-left: 6px; padding: 4px 10px; border-radius: 6px; background: #00b894;color:#fff;border:none;cursor:pointer;">Chấm bài</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -622,7 +684,7 @@
             }
         }
 
-        function viewStudentExam(studentCode, studentName, studentClass, examId, resultId) {
+        function viewStudentExam(studentCode, studentName, studentClass, studentSchool, examId, resultId) {
             // Mở modal xem bài thi, truyền mã SV và mã đề vào form.html qua query string
             localStorage.setItem('isViewResult', 1);
             localStorage.setItem('isStudent', 1);
@@ -630,6 +692,7 @@
             localStorage.setItem('examId', examId);
             localStorage.setItem('studentName', studentName);
             localStorage.setItem('studentClass', studentClass);
+            localStorage.setItem('school', studentSchool);
             var frame = document.getElementById('viewExamFrame');
             frame.src = `form.html`;
             document.getElementById('viewExamModal').style.display = 'flex';
