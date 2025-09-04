@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../data/data.js"></script>
+        <script src="../js/script.js"></script>
         <title>Đăng ký tài khoản</title>
         <style>
             body {
@@ -94,8 +95,7 @@
                 border-radius: 14px;
                 box-shadow: 0 8px 32px rgba(52,152,219,0.18);
                 padding: 32px 28px 24px 28px;
-                min-width: 320px;
-                max-width: 90vw;
+                width: auto;
                 text-align: center;
                 animation: modalFadeIn 0.35s;
                 position: relative;
@@ -247,108 +247,6 @@
                 <button class="close-button" onclick="closeResultModal()">OK</button>
             </div>
         </div>
-        <script>
-            let checkRegister = 1;
-            const subjectSelect = document.getElementById('subject');
-            if (subjectSelect && subjectSelect.options.length <= 1) {
-                subjects.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub.value;
-                    opt.textContent = sub.text;
-                    subjectSelect.appendChild(opt);
-                });
-            }
-
-            function showResultModal(title, content) {
-                document.getElementById('resultTitle').innerText = title;
-                document.getElementById('resultContent').innerHTML = content;
-                document.getElementById('resultModal').style.display = 'flex';
-            }
-
-            function closeResultModal() {
-                if (checkRegister === 1) {
-                    window.location.href = 'login.html';
-                }
-                document.getElementById('resultModal').style.display = 'none';
-                document.getElementById('registerForm').reset();
-            }
-
-            // Hiệu ứng xoay cho icon
-            const style = document.createElement('style');
-            style.innerHTML = `
-            .rotating-icon {
-                animation: rotate 1s linear infinite;
-            }
-            @keyframes rotate {
-                100% { transform: rotate(360deg); }
-            }
-            `;
-            document.head.appendChild(style);
-
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const btn = document.getElementById('btnRegister');
-                const icon = document.getElementById('iconRegister');
-                btn.disabled = true;
-                icon.style.display = 'inline-block';
-
-                // Validate số điện thoại thêm lần nữa
-                const phone = document.getElementById('phone').value;
-                const phoneRegex = /^0[0-9]{9}$/;
-                if (!phoneRegex.test(phone)) {
-                    showResultModal('Lỗi đăng ký', 'Số điện thoại không hợp lệ!');
-                    btn.disabled = false;
-                    icon.style.display = 'none';
-                    return;
-                }
-
-                // Lấy dữ liệu từ form
-                const formData = {};
-                new FormData(this).forEach((value, key) => {
-                    if (key === 'id' || key === 'phone') {
-                        formData[key] = String(value);
-                    } else if (key === 'birthday') {
-                        // Format ngày sinh thành dd/mm/yyyy
-                        if (value) {
-                            const d = new Date(value);
-                            const day = String(d.getDate()).padStart(2, '0');
-                            const month = String(d.getMonth() + 1).padStart(2, '0');
-                            const year = d.getFullYear();
-                            formData[key] = `${day}/${month}/${year}`;
-                        } else {
-                            formData[key] = '';
-                        }
-                    } else {
-                        formData[key] = value;
-                    }
-                });
-                formData['action'] = 'register';
-                // Gửi dữ liệu lên Google Apps Script bằng fetch
-                fetch(ggApiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showResultModal('Đăng ký thành công', 'Chúc mừng bạn đã đăng ký thành công!<br>Vui lòng chờ <b>ADMIN</b> hoặc liên hệ <a href="tel:0914261688">0914 261 688</a><br> để kích hoạt tài khoản.');
-                        document.getElementById('registerForm').reset();
-                        checkRegister = 1;
-                    } else {
-                        showResultModal('Lỗi đăng ký', data.message || 'Đăng ký thất bại! Vui lòng thử lại.');
-                        checkRegister = 0;
-                    }
-                })
-                .catch(error => {
-                    showResultModal('Lỗi đăng ký', 'Đăng ký thất bại! Vui lòng thử lại.');
-                    checkRegister = 0;
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    icon.style.display = 'none';
-                });
-            });
-        </script>
+        <script></script>
     </body>
 </html>

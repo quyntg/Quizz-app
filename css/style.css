@@ -1,3 +1,9 @@
+/* Chỉ full màn hình ở màn load */
+body[data-page='load'] #app {
+    width: 100vw;
+    height: auto;
+    display: flex;
+}
 :root {
     --bg: #f0f2f5;
     --card: #fff;
@@ -82,7 +88,7 @@ html {
 }
 .content {
     flex: 1;
-    padding: var(--gap);
+    padding: 12px 12px 0 12px;
     display: flex;
     flex-direction: column;
 }
@@ -146,9 +152,9 @@ html {
     background: white;
     margin: 10% auto;
     padding: 20px;
-    width: 400px;
     border-radius: 8px;
     text-align: center;
+    width: 30%;
 }
 .modal-content form {
     display: flex;
@@ -189,6 +195,7 @@ html {
 /* Submit button container */
 .submit-container {
     margin-top: var(--gap);
+    margin-bottom: var(--gap);
     text-align: center;
 }
 
@@ -292,6 +299,10 @@ button:hover {
 }
 
 @media (max-width: 768px) {
+    body[data-page='load'] #app {
+        display: block;
+    }
+
     .container {
         flex-direction: column;
         height: auto;

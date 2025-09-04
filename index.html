@@ -4,13 +4,221 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>A Quiz</title>
-        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="/css/style.css">
         <script src="https://apis.google.com/js/platform.js" async defer></script>
+        <script src="https://unpkg.com/page/page.js"></script>
+        <script src="../data/data.js"></script>
+        <script src="../js/script.js"></script>
     </head>
-    <body>        
+    <body>
+        <!-- Nội dung load động -->
+        <main id="app"></main>
+
         <script>
-            // Khi trang này load lên sẽ chuyển luôn sang create.html
-            window.location.href = 'html/login.html';
+            // Định nghĩa route cho SPA (hash routing)
+            page('/', () => {
+                loadPage('html/login.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    initLoginPage();
+                }, 100);
+            });
+
+            page('/login', () => {
+                loadPage('html/login.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    initLoginPage();
+                }, 100);
+            });
+
+            page('/register', () => {
+                loadPage('html/register.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    initSubjectSelect();
+
+                    const registerForm = document.getElementById('registerForm');
+                    if (registerForm) {
+                        registerForm.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            register();
+                        });
+                    }
+                }, 100);
+            });
+
+            page('/result', () => {
+                loadPage('html/result.html');
+                let examId = localStorage.getItem('examId');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
+                    showLoadingModal(true);
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            renderStudentResults(data);
+                        })
+                        .catch(() => {
+                            alert('Không lấy được kết quả!');
+                        })
+                        .finally(() => {
+                            showLoadingModal(false);
+                        });
+                }, 100);
+            });
+
+            page('/info', () => {
+                loadPage('html/info.html');
+
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    showGreeting();
+                    actionGreeting();
+                    runAfterGetTeacher();
+                }, 100);
+            });
+
+            page('/exam', () => {
+                loadPage('html/exam.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+
+                    generatedQuestions = JSON.parse(localStorage.getItem('questions'));
+                    totalQuestions = generatedQuestions.length;
+                    totalPages = Math.ceil(totalQuestions / pageSize);
+                    
+                    // Nếu là reload trang thì tự động submit bài
+                    if (localStorage.getItem('isReload') == '1') {
+                        console.log('Page reloaded');
+                        isSubmitted = true;
+                        localStorage.setItem('isStudentDoing', 1);
+                        localStorage.setItem('isViewResult', 1);
+                        localStorage.setItem('isSubmitted', true);
+                        document.getElementById('submitQuiz').disabled = true;
+                        // Nếu isStudentDoing = 0 thì không submit bài thi
+                        if (localStorage.getItem('isStudentDoing') != '0') {
+                            submitExam(0);
+                        } else {            
+                            localStorage.setItem('isSubmitted', '0');
+                        }
+                    } else {                        
+                        console.log('First load');
+                    }
+			        localStorage.setItem('isReload', 1);
+                    initExamPage();
+                }, 100);
+            });
+
+            page('/student', () => {
+                loadPage('html/student.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    document.getElementById('studentForm').addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        openExam();
+                    });
+                    checkExam();
+                }, 100);
+            });
+
+            page('/create', () => {
+                loadPage('html/create.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+                    showGreeting();
+                    actionGreeting();
+
+                    initSubjectSelect();
+                    let user = JSON.parse(localStorage.getItem('user')) || {};
+                    document.getElementById('subject').value = user.subject || '';
+
+                    // Tạo option cho select khối dựa vào user.schoolLevel
+                    const gradeSelect = document.getElementById('grade');
+                    if (gradeSelect && gradeSelect.options.length <= 1) {
+                        let gradeOptions = [];
+                        if (user.schoolLevel === 'primary') {
+                            gradeOptions = ['1', '2', '3', '4', '5'];
+                        } else if (user.schoolLevel === 'secondary') {
+                            gradeOptions = ['6', '7', '8', '9'];
+                        } else if (user.schoolLevel === 'high') {
+                            gradeOptions = ['10', '11', '12'];
+                        }
+                        gradeOptions.forEach(gr => {
+                            const opt = document.createElement('option');
+                            opt.value = gr;
+                            opt.textContent = gr;
+                            gradeSelect.appendChild(opt);
+                        });
+                        gradeSelect.value = user.grade || '';
+                    }
+                    const examTypeSelect = document.getElementById('examType');
+                    examTypeSelect.addEventListener('change', updateTypeInputs);
+                }, 100);
+            });
+
+            page('/createQuestion', () => {
+                loadPage('html/createQuestion.html');
+                setTimeout(() => {       
+                    document.body.removeAttribute('data-page');             
+                    initSubjectSelect();
+                    // Xử lý submit form
+                    document.getElementById('questionForm').onsubmit = async function(e) {
+                        submitQuestionForm();
+                    };
+                    setUpCreateQuestionPage();
+                }, 100);
+            });
+
+            page('/form', () => {
+                loadPage('html/form.html');
+                setTimeout(() => {
+                    document.body.removeAttribute('data-page');
+
+                    initExamView();
+                }, 100);
+            });
+
+            page('/load', () => {
+                loadPage('html/load.html');
+                setTimeout(() => {      
+                    document.body.setAttribute('data-page', 'load');      
+                    showGreeting();
+                    actionGreeting();
+
+                   initSubjectSelect();
+                    // Nếu có examId thì gọi API lấy thông tin đề và cập nhật nút
+                    loadFromJSON(JSON.parse(localStorage.getItem('questions')));
+                    let isNewExam = localStorage.getItem('isNewExam');
+                    const examId = localStorage.getItem('examId');
+                    let btnSaveExam = document.getElementById('btnSaveExam');
+                    let btnStartExam = document.getElementById('btnStartExam');
+                    let afterSaveBtns = document.getElementById('afterSaveBtns');
+                    if (isNewExam == 0) {
+                        btnSaveExam.classList.add('btn-disabled');
+                        btnStartExam.classList.remove('btn-disabled');
+                        afterSaveBtns.style.display = 'flex';
+                    } else if (isNewExam == 1) {
+                        btnSaveExam.classList.remove('btn-disabled');
+                        btnStartExam.classList.remove('btn-disabled');
+                        afterSaveBtns.style.display = 'none';
+                    }
+                    // Modal xem ảnh
+                    document.getElementById('btnViewImage').onclick = function() {
+                        viewImageModal();
+                    };
+
+                    ["id", "question", "subject", "type", "grade", "media", "A", "B", "C", "D", "correct", "description", "difficulty"].forEach(id => {
+                        document.getElementById(id).addEventListener("input", updateCurrent);
+                    });
+
+                    disableAllFields();
+                }, 100);
+            });
+
+            // Sử dụng hashbang mode
+            page({ hashbang: true });
         </script>
     </body>
 </html>

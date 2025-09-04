@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../data/data.js"></script>
+        <script src="../js/script.js"></script>
         <title>A Quiz</title>
         <style>
             body {
@@ -111,8 +112,7 @@
                 padding: 24px;
                 border-radius: 12px;
                 box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-                width: 90%;
-                max-width: 400px;
+                width: auto;
                 text-align: center;
             }
 
@@ -187,10 +187,10 @@
                 <input type="text" id="login-username" placeholder="Tên đăng nhập" required>
                 <input type="password" id="login-password" placeholder="Mật khẩu" required>
                 <div id="error" class="error-message hidden"></div>
-                <button id="loginBtn" onclick="login()">Đăng nhập</button>
+                <button id="loginBtn">Đăng nhập</button>
             </div>
-            <span class="link" onclick="showRegister()">Đăng ký tài khoản</span>
-            <span class="link" onclick="showForgot()">Quên mật khẩu?</span>
+            <span class="link" id="registerBtn">Đăng ký tài khoản</span>
+            <span class="link" id="forgotBtn">Quên mật khẩu?</span>
         </div>
 
         <!-- Modal Quên mật khẩu -->
@@ -199,7 +199,7 @@
                 <button class="modal-close" onclick="closeForgotModal()">&times;</button>
                 <div class="modal-title">Khôi phục mật khẩu</div>
                 <div class="modal-content">
-                    Vui lòng liên hệ <b>admin</b> để khôi phục mật khẩu.<br>
+                    Vui lòng liên hệ <b>ADMIN</b> để khôi phục mật khẩu.<br>
                     Email: <a href="mailto:giaquy.adv@gmail.com">giaquy.adv@gmail.com</a><br>
                     SĐT: <a href="tel:0914261688">0914 261 688</a>
                 </div>
@@ -217,84 +217,6 @@
         </div>
 
         <script>
-            function login() {
-                const username = document.getElementById('login-username').value.trim();
-                const password = document.getElementById('login-password').value.trim();
-                const errorEl = document.getElementById("error");
-                const loginBtn = document.getElementById("loginBtn");
-
-                if (!username || !password) {
-                    errorEl.textContent = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
-                    errorEl.classList.remove('hidden');
-                    return;
-                }
-
-                // Hiệu ứng quay và disable nút
-                loginBtn.disabled = true;
-                loginBtn.innerHTML = '<span class="spinner"></span> Đang đăng nhập...';
-
-                const url = ggApiUrl + `?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-                fetch(url)
-                    .then((res) => {
-                        if (!res.ok) {
-                            throw new Error(`HTTP error! status: ${res.status}`);
-                        }
-                        return res.json();
-                    })
-                    .then((data) => {
-                        localStorage.setItem('user', JSON.stringify(data.user || {}));
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = 'Đăng nhập';
-                        if (data.success) {
-                            errorEl.classList.add("hidden");
-                            document.getElementById('successMessage').textContent = data.message || "Bạn đã đăng nhập thành công!";
-                            document.getElementById('successModal').style.display = 'flex';
-                            localStorage.setItem('isLoggedIn', 1);
-                            localStorage.setItem('isChange', 0);
-                        } else {
-                            errorEl.textContent = data.message || "Sai thông tin đăng nhập.";
-                            errorEl.classList.remove("hidden");
-                        }
-                    })
-                    .catch((err) => {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = 'Đăng nhập';
-                        errorEl.textContent = "Không thể kết nối máy chủ.";
-                        errorEl.classList.remove("hidden");
-                    });
-            }
-
-            // Bấm Enter để login
-            document.getElementById('login-form').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    login();
-                }
-            });
-
-            function showRegister() {
-                window.location.href = 'register.html';
-            }
-
-            function showForgot() {
-                document.getElementById('forgotModal').style.display = 'flex';
-            }
-
-            function closeForgotModal() {
-                document.getElementById('forgotModal').style.display = 'none';
-            }
-
-            function goToInfo() {
-                let user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (user.note == 'nhaplieu') {
-                    window.location.href = "createQuestion.html";
-                } else {
-                    window.location.href = "info.html";
-                }
-            }
-            function closeSuccessModal() {
-                document.getElementById('successModal').style.display = 'none';
-            }
         </script>
     </body>
 </html>
