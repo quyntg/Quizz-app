@@ -1075,6 +1075,7 @@ document.head.appendChild(style);
 function initSubjectSelect() {
 	const subjectSelect = document.getElementById('subject');
 	if (subjectSelect && subjectSelect.options.length <= 1 && typeof subjects !== 'undefined') {
+		console.log('Populating subject select...', subjects);
 		subjects.forEach(sub => {
 			const opt = document.createElement('option');
 			opt.value = sub.value;
