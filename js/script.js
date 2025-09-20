@@ -982,7 +982,7 @@ function initLoginPage() {
 // start js register
 
 let checkRegister = 1;
-function register() {	
+function register(registerForm) {	
 	const btn = document.getElementById('btnRegister');
 	const icon = document.getElementById('iconRegister');
 	btn.disabled = true;
@@ -1000,7 +1000,7 @@ function register() {
 
 	// Lấy dữ liệu từ form
 	const formData = {};
-	new FormData(this).forEach((value, key) => {
+	new FormData(registerForm).forEach((value, key) => {
 		if (key === 'id' || key === 'phone') {
 			formData[key] = String(value);
 		} else if (key === 'birthday') {
