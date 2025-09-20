@@ -132,6 +132,7 @@
 
                     initSubjectSelect();
                     let user = JSON.parse(localStorage.getItem('user')) || {};
+                    document.getElementById('teacherName').value = user.name || '';
                     document.getElementById('subject').value = user.subject || '';
 
                     // Tạo option cho select khối dựa vào user.schoolLevel
