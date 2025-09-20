@@ -20,24 +20,21 @@
             console.log(4)
             // Định nghĩa route cho SPA (hash routing)
             page('/', () => {
-                loadPage('html/login.html');
-                setTimeout(() => {
+                loadPage('html/login.html').then(() => {
                     document.body.removeAttribute('data-page');
                     initLoginPage();
-                }, 100);
+                });
             });
 
             page('/login', () => {
-                loadPage('html/login.html');
-                setTimeout(() => {
+                loadPage('html/login.html').then(() => {
                     document.body.removeAttribute('data-page');
                     initLoginPage();
-                }, 100);
+                });
             });
 
             page('/register', () => {
-                loadPage('html/register.html');
-                setTimeout(() => {
+                loadPage('html/register.html').then(() => {
                     document.body.removeAttribute('data-page');
                     initSubjectSelect();
 
@@ -48,13 +45,12 @@
                             register(registerForm);
                         });
                     }
-                }, 100);
+                });
             });
 
             page('/result', () => {
-                loadPage('html/result.html');
-                let examId = localStorage.getItem('examId');
-                setTimeout(() => {
+                loadPage('html/result.html').then(() => {
+                    let examId = localStorage.getItem('examId');
                     document.body.removeAttribute('data-page');
                     const url = `${ggApiUrl}?action=getResultById&examId=${encodeURIComponent(examId)}`;
                     showLoadingModal(true);
@@ -69,23 +65,20 @@
                         .finally(() => {
                             showLoadingModal(false);
                         });
-                }, 100);
+                });
             });
 
             page('/info', () => {
-                loadPage('html/info.html');
-
-                setTimeout(() => {
+                loadPage('html/info.html').then(() => {
                     document.body.removeAttribute('data-page');
                     showGreeting();
                     actionGreeting();
                     runAfterGetTeacher();
-                }, 100);
+                });
             });
 
             page('/exam', () => {
-                loadPage('html/exam.html');
-                setTimeout(() => {
+                loadPage('html/exam.html').then(() => {
                     document.body.removeAttribute('data-page');
 
                     generatedQuestions = JSON.parse(localStorage.getItem('questions'));
@@ -111,24 +104,22 @@
                     }
 			        localStorage.setItem('isReload', 1);
                     initExamPage();
-                }, 100);
+                });
             });
 
             page('/student', () => {
-                loadPage('html/student.html');
-                setTimeout(() => {
+                loadPage('html/student.html').then(() => {
                     document.body.removeAttribute('data-page');
                     document.getElementById('studentForm').addEventListener('submit', async function(e) {
                         e.preventDefault();
                         openExam();
                     });
                     checkExam();
-                }, 100);
+                });
             });
 
             page('/create', () => {
-                loadPage('html/create.html');
-                setTimeout(() => {
+                loadPage('html/create.html').then(() => {
                     document.body.removeAttribute('data-page');
                     showGreeting();
                     actionGreeting();
@@ -159,12 +150,11 @@
                     }
                     const examTypeSelect = document.getElementById('examType');
                     examTypeSelect.addEventListener('change', updateTypeInputs);
-                }, 100);
+                });
             });
 
             page('/createQuestion', () => {
-                loadPage('html/createQuestion.html');
-                setTimeout(() => {       
+                loadPage('html/createQuestion.html').then(() => {
                     document.body.removeAttribute('data-page');             
                     initSubjectSelect();
                     // Xử lý submit form
@@ -172,21 +162,18 @@
                         submitQuestionForm();
                     };
                     setUpCreateQuestionPage();
-                }, 100);
+                });
             });
 
             page('/form', () => {
-                loadPage('html/form.html');
-                setTimeout(() => {
+                loadPage('html/form.html').then(() => {
                     document.body.removeAttribute('data-page');
-
                     initExamView();
-                }, 100);
+                });
             });
 
             page('/load', () => {
-                loadPage('html/load.html');
-                setTimeout(() => {      
+                loadPage('html/load.html').then(() => {
                     document.body.setAttribute('data-page', 'load');      
                     showGreeting();
                     actionGreeting();
@@ -218,7 +205,7 @@
                     });
 
                     disableAllFields();
-                }, 100);
+                });
             });
 
             // Sử dụng hashbang mode
